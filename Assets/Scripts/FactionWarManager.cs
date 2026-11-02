@@ -209,12 +209,12 @@ namespace TikTokFactionWar
                 worldArenaRoot.position = Vector3.zero;
             }
 
-            // Gentle idle breathing on base cores so nothing is statuary
+            // Gentle idle breathing on base cores so nothing is statuary (2d-games/SKILL.md squash & stretch)
             float basePulse = 1f + Mathf.Sin(Time.time * 2.8f) * 0.035f;
             if (topBaseCoreRenderer != null)
-                topBaseCoreRenderer.transform.localScale = new Vector3(1.55f * basePulse, 0.85f / basePulse, 1f);
+                topBaseCoreRenderer.transform.localScale = new Vector3(1.05f * basePulse, 1.05f / basePulse, 1f);
             if (bottomBaseCoreRenderer != null)
-                bottomBaseCoreRenderer.transform.localScale = new Vector3(1.55f * basePulse, 0.85f / basePulse, 1f);
+                bottomBaseCoreRenderer.transform.localScale = new Vector3(1.05f * basePulse, 1.05f / basePulse, 1f);
 
             if (CurrentState == GameState.Playing)
             {

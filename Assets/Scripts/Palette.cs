@@ -320,6 +320,67 @@ namespace TikTokFactionWar
             return s;
         }
 
+        public static Sprite GetGeneratedSprite(string spriteName, float pixelsPerUnit = 100f)
+        {
+            string key = $"gen_{spriteName}_{pixelsPerUnit}";
+            if (SpriteCache.TryGetValue(key, out Sprite cached) && cached != null)
+                return cached;
+
+            string resPath = $"Sprites/{spriteName}";
+            Sprite loadedSprite = Resources.Load<Sprite>(resPath);
+            if (loadedSprite != null && Mathf.Abs(loadedSprite.pixelsPerUnit - pixelsPerUnit) < 1f)
+            {
+                SpriteCache[key] = loadedSprite;
+                return loadedSprite;
+            }
+
+            Texture2D tex = Resources.Load<Texture2D>(resPath);
+            if (tex != null)
+            {
+                tex.filterMode = FilterMode.Bilinear;
+                tex.wrapMode = TextureWrapMode.Clamp;
+                Sprite created = Sprite.Create(
+                    tex,
+                    new Rect(0, 0, tex.width, tex.height),
+                    new Vector2(0.5f, 0.5f),
+                    pixelsPerUnit,
+                    0,
+                    SpriteMeshType.FullRect);
+                created.name = spriteName;
+                SpriteCache[key] = created;
+                return created;
+            }
+
+            return loadedSprite;
+        }
+
+        public static Sprite GetArenaBattlefieldSprite()
+        {
+            Sprite s = GetGeneratedSprite("arena_battlefield_bg", 100f);
+            return s != null ? s : GetGridArenaSprite();
+        }
+
+        public static Sprite GetFortressBaseSprite()
+        {
+            Sprite s = GetGeneratedSprite("fortress_base", 100f);
+            return s != null ? s : GetRoundedRectSprite(128, 128, 22, 4);
+        }
+
+        public static Sprite GetUnitSprite(UnitTier tier)
+        {
+            string name = tier switch
+            {
+                UnitTier.Infantry => "unit_infantry",
+                UnitTier.Squad => "unit_infantry",
+                UnitTier.Tank => "unit_tank",
+                UnitTier.Mecha => "unit_mecha",
+                UnitTier.Dragon => "unit_dragon",
+                _ => "unit_infantry"
+            };
+            Sprite s = GetGeneratedSprite(name, 100f);
+            return s != null ? s : GetCircleSprite(64, 4);
+        }
+
         private static float SignedDistanceRoundedBox(Vector2 p, Vector2 b, float r)
         {
             Vector2 q = new Vector2(Mathf.Abs(p.x) - b.x + r, Mathf.Abs(p.y) - b.y + r);
