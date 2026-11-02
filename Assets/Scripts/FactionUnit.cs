@@ -49,6 +49,11 @@ namespace TikTokFactionWar
         private float _hitPopTimer;
         private float _attackAnimTimer;
         private CircleCollider2D _unitCollider;
+        private Color _bodyBaseColor = Color.white;
+        private float _flashTimer;
+        private float _stepTimer;
+        private bool _deathFxPlayed;
+        private Vector3 _auraBaseScale = Vector3.one;
 
         public bool IsAlive => CurrentHp > 0f && gameObject.activeSelf;
 
@@ -298,6 +303,12 @@ namespace TikTokFactionWar
             _weaponRightRenderer.color = Palette.WithAlpha(primary, 0.88f);
             _secondaryRenderer.color = Palette.WithAlpha(primary, 0.24f);
 
+            _bodyBaseColor = _bodyRenderer.color;
+            _flashTimer = 0f;
+            _deathFxPlayed = false;
+            _stepTimer = Random.Range(0f, StepInterval);
+            _auraBaseScale = _weaponRightRenderer.transform.localScale;
+
             _avatarFrameRenderer.color = tier >= UnitTier.Tank ? Palette.AccentGold : primary;
             _avatarRenderer.sprite = avatarSprite != null ? avatarSprite : Palette.GetCircleSprite(64, 2);
             _avatarRenderer.color = Palette.PureTint;
@@ -329,9 +340,26 @@ namespace TikTokFactionWar
 
         public void GrantShield(float seconds)
         {
+            bool wasOff = ShieldTimer <= 0f;
             ShieldTimer = Mathf.Max(ShieldTimer, seconds);
             if (_shieldRingRenderer != null)
                 _shieldRingRenderer.gameObject.SetActive(true);
+            if (wasOff && CombatFx.Instance != null)
+                CombatFx.Instance.PlayShieldUp(transform.position);
+        }
+
+        private float StepInterval
+        {
+            get
+            {
+                switch (Tier)
+                {
+                    case UnitTier.Tank: return 0.15f;
+                    case UnitTier.Mecha: return 0.62f;
+                    case UnitTier.Dragon: return 0.50f;
+                    default: return 0.28f;
+                }
+            }
         }
 
         public void TickUnit(float dt, FactionWarManager manager)
@@ -349,15 +377,63 @@ namespace TikTokFactionWar
             }
 
             // 2d-games/SKILL.md Animation Principles:
-            // 1. Idle/Walk breathing sine bob
-            // 2. Squash & stretch on impact (_hitPopTimer)
+            // 1. Idle/Walk breathing sine bob + per-tier locomotion (infantry hop, tank hover-sway, mecha stomp, dragon wing-flap)
+            // 2. Squash & stretch on impact (_hitPopTimer) + white hit-flash
             // 3. Anticipation + Lunge + Follow-through on attack (_attackAnimTimer)
             float bobPhase = (Time.time + _animSeed) * (MoveSpeed * 3.8f);
             float scaleX = _baseScale.x * (1f + Mathf.Sin(bobPhase) * 0.045f);
             float scaleY = _baseScale.y / (1f + Mathf.Sin(bobPhase) * 0.045f);
             float tiltDeg = Mathf.Cos(bobPhase * 0.5f) * 4.5f;
             float lungeOffsetY = 0f;
+            float swayX = 0f;
             float dirSign = FactionId == 1 ? -1f : 1f;
+            float clock = Time.time + _animSeed;
+
+            switch (Tier)
+            {
+                case UnitTier.Infantry:
+                case UnitTier.Squad:
+                    // Bouncy trot: little hops + stronger lean per stride
+                    lungeOffsetY += Mathf.Abs(Mathf.Sin(clock * 9.5f)) * 0.07f;
+                    tiltDeg = Mathf.Sin(clock * 9.5f) * 7f;
+                    break;
+                case UnitTier.Tank:
+                    // Hover sway: slow lateral drift + engine rumble jitter
+                    swayX = Mathf.Sin(clock * 3.2f) * 0.035f;
+                    lungeOffsetY += Mathf.Sin(clock * 5.5f) * 0.025f;
+                    tiltDeg = Mathf.Sin(clock * 3.2f) * 3f;
+                    break;
+                case UnitTier.Mecha:
+                    // Heavy stride: rises then slams down with a rocking torso
+                    lungeOffsetY += Mathf.Abs(Mathf.Sin(clock * 5.1f)) * 0.06f;
+                    scaleY *= 1f - Mathf.Pow(Mathf.Max(0f, -Mathf.Sin(clock * 5.1f + 1.2f)), 3f) * 0.07f;
+                    tiltDeg = Mathf.Sin(clock * 5.1f) * 4f;
+                    break;
+                case UnitTier.Dragon:
+                    // Wing flapping: horizontal wing span pumps + body floats
+                    scaleX *= 1f + Mathf.Sin(clock * 10.5f) * 0.14f;
+                    lungeOffsetY += Mathf.Sin(clock * 5.25f) * 0.10f;
+                    tiltDeg = Mathf.Sin(clock * 2.6f) * 3.5f;
+                    break;
+            }
+
+            if (_flashTimer > 0f)
+            {
+                _flashTimer -= dt;
+                float k = Mathf.Clamp01(_flashTimer / 0.12f);
+                _bodyRenderer.color = Color.Lerp(_bodyBaseColor, Color.white, k * 0.85f);
+            }
+            else if (_bodyRenderer.color != _bodyBaseColor)
+            {
+                _bodyRenderer.color = _bodyBaseColor;
+            }
+
+            // Pulsing faction aura ring
+            if (_weaponRightRenderer != null)
+            {
+                float pulse = 1f + Mathf.Sin(clock * 4.2f) * 0.07f;
+                _weaponRightRenderer.transform.localScale = new Vector3(_auraBaseScale.x * pulse, _auraBaseScale.y * pulse, 1f);
+            }
 
             if (_attackAnimTimer > 0f)
             {
@@ -396,7 +472,7 @@ namespace TikTokFactionWar
                 scaleY *= 0.85f;
             }
 
-            _visualRoot.localPosition = new Vector3(0f, lungeOffsetY, 0f);
+            _visualRoot.localPosition = new Vector3(swayX, lungeOffsetY, 0f);
             _visualRoot.localScale = new Vector3(scaleX, scaleY, 1f);
             _visualRoot.localRotation = Quaternion.Euler(0f, 0f, tiltDeg);
 
@@ -422,6 +498,11 @@ namespace TikTokFactionWar
                 {
                     _attackCooldown = AttackInterval;
                     _attackAnimTimer = 0.24f;
+                    if (CombatFx.Instance != null)
+                    {
+                        Vector3 basePos = new Vector3(Mathf.Clamp(transform.position.x, -1.1f, 1.1f), enemyBaseY, 0f);
+                        CombatFx.Instance.PlayAttack(this, basePos, true);
+                    }
                     manager.DamageBase(FactionId == 1 ? 2 : 1, AttackDamage, OwnerUserId, OwnerNickname, FactionId);
                     _hitPopTimer = 0.12f;
                 }
@@ -433,6 +514,15 @@ namespace TikTokFactionWar
                 pos.y += dir * MoveSpeed * dt;
                 pos.x = Mathf.Clamp(pos.x, -3.4f, 3.4f);
                 transform.position = pos;
+
+                // Locomotion FX per stride: dust / hover thrust / stomp shockwave / wing gust
+                _stepTimer -= dt;
+                if (_stepTimer <= 0f)
+                {
+                    _stepTimer = StepInterval;
+                    if (CombatFx.Instance != null) CombatFx.Instance.PlayFootstep(this, dir);
+                    if (Tier == UnitTier.Mecha) manager.TriggerCameraShake(manager.shakeForceDefault * 0.10f);
+                }
             }
         }
 
@@ -441,14 +531,19 @@ namespace TikTokFactionWar
             _hitPopTimer = 0.12f;
             bool isAoE = Tier >= UnitTier.Tank;
 
+            if (CombatFx.Instance != null)
+            {
+                CombatFx.Instance.PlayAttack(this, target.transform.position, false);
+            }
+            else if (VfxPool.Instance != null)
+            {
+                VfxPool.Instance.PlayBurst(target.transform.position, Palette.GetFactionPrimary(FactionId), isAoE ? 10 : 5, isAoE ? 1.1f : 0.7f);
+            }
+
             if (isAoE)
             {
                 manager.DamageEnemiesInRadius(target.transform.position, FactionId, AttackDamage, 1.15f, OwnerUserId, OwnerNickname);
-                if (VfxPool.Instance != null)
-                {
-                    VfxPool.Instance.PlayBurst(target.transform.position, Palette.GetFactionPrimary(FactionId), 10, 1.1f);
-                }
-                if (GameAudio.Instance != null)
+                if (CombatFx.Instance == null && GameAudio.Instance != null)
                 {
                     GameAudio.Instance.PlayImpactHit();
                 }
@@ -457,10 +552,6 @@ namespace TikTokFactionWar
             {
                 target.TakeDamage(AttackDamage);
                 manager.RecordContribution(OwnerUserId, OwnerNickname, FactionId, Mathf.RoundToInt(AttackDamage));
-                if (VfxPool.Instance != null)
-                {
-                    VfxPool.Instance.PlayBurst(target.transform.position, Palette.GetFactionSecondary(FactionId), 5, 0.7f);
-                }
             }
         }
 
@@ -471,9 +562,33 @@ namespace TikTokFactionWar
 
             CurrentHp -= dmg;
             _hitPopTimer = 0.1f;
+            _flashTimer = 0.12f;
             UpdateHpBar();
 
-            return CurrentHp <= 0f;
+            bool died = CurrentHp <= 0f;
+            CombatFx fx = CombatFx.Instance;
+            if (fx != null)
+            {
+                if (died && !_deathFxPlayed)
+                {
+                    _deathFxPlayed = true;
+                    fx.PlayDeath(transform.position, FactionId, Tier);
+                }
+                else if (!died)
+                {
+                    fx.PlayHitSpark(transform.position + new Vector3(Random.Range(-0.15f, 0.15f), Random.Range(-0.1f, 0.2f), 0f), Palette.GetFactionPrimary(FactionId == 1 ? 2 : 1));
+                    if (dmg >= 40f && !fx.Busy && VfxPool.Instance != null)
+                    {
+                        VfxPool.Instance.SpawnFloatingText(
+                            transform.position + new Vector3(0f, 0.55f, 0f),
+                            $"-{Mathf.RoundToInt(dmg)}",
+                            dmg >= 100f ? Palette.AccentGold : Palette.NeutralLight,
+                            dmg >= 100f ? 2.8f : 2.2f);
+                    }
+                }
+            }
+
+            return died;
         }
 
         private void UpdateHpBar()

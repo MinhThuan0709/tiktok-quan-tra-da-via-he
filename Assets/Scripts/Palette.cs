@@ -320,6 +320,19 @@ namespace TikTokFactionWar
             return s;
         }
 
+        private static Material _fxAdditiveMaterial;
+
+        /// <summary>VFX sprite material with URP 2D Unlit / Sprites shader for HDR Bloom support.</summary>
+        public static Material GetFxMaterial()
+        {
+            if (_fxAdditiveMaterial != null) return _fxAdditiveMaterial;
+
+            Shader shader = Shader.Find("Universal Render Pipeline/2D/Sprite-Unlit-Default");
+            if (shader == null) shader = Shader.Find("Sprites/Default");
+            _fxAdditiveMaterial = new Material(shader) { name = "Palette_FxAdditive" };
+            return _fxAdditiveMaterial;
+        }
+
         public static Sprite GetGeneratedSprite(string spriteName, float pixelsPerUnit = 100f)
         {
             string key = $"gen_{spriteName}_{pixelsPerUnit}";

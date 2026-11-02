@@ -147,6 +147,11 @@ namespace TikTokFactionWar
         private Coroutine _bottomHpTween;
         private Coroutine _bannerCoroutine;
         private float _backdropPanPhase;
+        private float _topFlash;
+        private float _bottomFlash;
+        private Color _topCoreBaseColor = Color.white;
+        private Color _bottomCoreBaseColor = Color.white;
+        private bool _coreColorsCaptured;
 
         public IReadOnlyList<FactionUnit> ActiveUnits => _activeUnits;
 
@@ -215,6 +220,7 @@ namespace TikTokFactionWar
                 topBaseCoreRenderer.transform.localScale = new Vector3(1.05f * basePulse, 1.05f / basePulse, 1f);
             if (bottomBaseCoreRenderer != null)
                 bottomBaseCoreRenderer.transform.localScale = new Vector3(1.05f * basePulse, 1.05f / basePulse, 1f);
+            TickBaseFlash(Time.deltaTime);
 
             if (CurrentState == GameState.Playing)
             {
@@ -344,6 +350,7 @@ namespace TikTokFactionWar
             _activeUnits.Clear();
             _viewerFactionMap.Clear();
             _viewerStatsMap.Clear();
+            if (CombatFx.Instance != null) CombatFx.Instance.ClearAll();
 
             TopBaseHp = baseMaxHp;
             BottomBaseHp = baseMaxHp;
@@ -478,7 +485,11 @@ namespace TikTokFactionWar
                 unit.Initialize(factionId, tier, userId, nickname, initialAvatar);
                 _activeUnits.Add(unit);
 
-                if (VfxPool.Instance != null && n == 0)
+                if (n == 0 && CombatFx.Instance != null)
+                {
+                    CombatFx.Instance.PlaySpawnSummon(unit.transform.position, factionId, tier);
+                }
+                else if (VfxPool.Instance != null && n == 0)
                 {
                     VfxPool.Instance.PlayBurst(unit.transform.position, Palette.GetFactionPrimary(factionId), tier >= UnitTier.Tank ? 16 : 8, tier >= UnitTier.Tank ? 1.3f : 0.85f);
                 }
@@ -492,7 +503,7 @@ namespace TikTokFactionWar
             if (baseCore != null && VfxPool.Instance != null)
             {
                 VfxPool.Instance.SpawnFloatingText(
-                    baseCore.position + new Vector3(0f, factionId == 1 ? -0.55f : 0.55f, 0f),
+                    baseCore.position + new Vector3(UnityEngine.Random.Range(-1.6f, 1.6f), factionId == 1 ? -0.55f : 0.55f, 0f),
                     tier >= UnitTier.Tank ? $">> {nickname} GỌI {tier.ToString().ToUpper()}!" : $"+1 {nickname}",
                     tier >= UnitTier.Tank ? Palette.AccentGold : Palette.GetFactionSecondary(factionId),
                     tier >= UnitTier.Tank ? 3.2f : 2.4f);
@@ -553,12 +564,18 @@ namespace TikTokFactionWar
 
             // Wipe enemy units
             int targetEnemyFaction = factionId == 1 ? 2 : 1;
+            if (CombatFx.Instance != null)
+            {
+                CombatFx.Instance.PlayNuke(new Vector3(0f, ArenaCenterY, 0f), Palette.GetFactionPrimary(factionId), targetEnemyFaction);
+            }
             for (int i = _activeUnits.Count - 1; i >= 0; i--)
             {
                 FactionUnit u = _activeUnits[i];
                 if (u.FactionId == targetEnemyFaction)
                 {
-                    if (VfxPool.Instance != null)
+                    if (CombatFx.Instance != null)
+                        CombatFx.Instance.PlayDeath(u.transform.position, u.FactionId, u.Tier);
+                    else if (VfxPool.Instance != null)
                         VfxPool.Instance.PlayBurst(u.transform.position, Palette.AccentOrange, 12, 1.25f);
                     _unitPool.Release(u);
                     _activeUnits.RemoveAt(i);
@@ -579,6 +596,28 @@ namespace TikTokFactionWar
             for (int i = 0; i < steps; i++)
             {
                 TickBattlefield(dt);
+                if (CombatFx.Instance != null) CombatFx.Instance.Tick(dt);
+                TickBaseFlash(dt);
+            }
+        }
+
+        private void TickBaseFlash(float dt)
+        {
+            if (topBaseCoreRenderer != null)
+            {
+                if (!_coreColorsCaptured)
+                {
+                    _topCoreBaseColor = topBaseCoreRenderer.color;
+                    _bottomCoreBaseColor = bottomBaseCoreRenderer != null ? bottomBaseCoreRenderer.color : Color.white;
+                    _coreColorsCaptured = true;
+                }
+                _topFlash = Mathf.Max(0f, _topFlash - dt * 5f);
+                topBaseCoreRenderer.color = Color.Lerp(_topCoreBaseColor, Color.white, _topFlash);
+            }
+            if (bottomBaseCoreRenderer != null && _coreColorsCaptured)
+            {
+                _bottomFlash = Mathf.Max(0f, _bottomFlash - dt * 5f);
+                bottomBaseCoreRenderer.color = Color.Lerp(_bottomCoreBaseColor, Color.white, _bottomFlash);
             }
         }
 
@@ -707,6 +746,12 @@ namespace TikTokFactionWar
                     VfxPool.Instance.PlayBurst(topBaseCoreRenderer.transform.position, Palette.FactionBottomPrimary, 8, 0.9f);
                     VfxPool.Instance.SpawnFloatingText(topBaseCoreRenderer.transform.position, $"-{Mathf.RoundToInt(damage)}", Palette.FactionBottomSecondary, 2.8f);
                 }
+                if (topBaseCoreRenderer != null)
+                {
+                    _topFlash = 1f;
+                    if (CombatFx.Instance != null) CombatFx.Instance.PlayBaseHit(topBaseCoreRenderer.transform.position, attackerFactionId, damage);
+                }
+                if (damage >= 100f) TriggerCameraShake(shakeForceDefault * Mathf.Clamp(damage / 400f, 0.3f, 1.2f));
 
                 // Comeback Last Stand at 20% HP
                 if (!_topLastStandTriggered && TopBaseHp > 0f && TopBaseHp <= baseMaxHp * 0.20f)
@@ -732,6 +777,12 @@ namespace TikTokFactionWar
                     VfxPool.Instance.PlayBurst(bottomBaseCoreRenderer.transform.position, Palette.FactionTopPrimary, 8, 0.9f);
                     VfxPool.Instance.SpawnFloatingText(bottomBaseCoreRenderer.transform.position, $"-{Mathf.RoundToInt(damage)}", Palette.FactionTopSecondary, 2.8f);
                 }
+                if (bottomBaseCoreRenderer != null)
+                {
+                    _bottomFlash = 1f;
+                    if (CombatFx.Instance != null) CombatFx.Instance.PlayBaseHit(bottomBaseCoreRenderer.transform.position, attackerFactionId, damage);
+                }
+                if (damage >= 100f) TriggerCameraShake(shakeForceDefault * Mathf.Clamp(damage / 400f, 0.3f, 1.2f));
 
                 if (!_bottomLastStandTriggered && BottomBaseHp > 0f && BottomBaseHp <= baseMaxHp * 0.20f)
                 {
