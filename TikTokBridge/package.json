@@ -1,0 +1,13 @@
+{
+  "name": "tiktok-faction-war-bridge",
+  "version": "1.0.0",
+  "description": "WebSocket Bridge connecting TikTok Live events (chat, gift, like, follow, share) to Unity TikTokFactionWar",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "tiktok-live-connector": "^1.2.1",
+    "ws": "^8.18.0"
+  }
+}
