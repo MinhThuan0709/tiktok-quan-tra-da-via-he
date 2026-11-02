@@ -13,8 +13,16 @@ using TikTokTeaStall;
 
 public static class BuildTeaStallScene
 {
+    public static void BuildAllFromCommandLine()
+    {
+        string res = BuildAll();
+        Debug.Log("[BuildTeaStallScene] " + res);
+    }
+
     public static string BuildAll()
     {
+        TeaStallPalette.ClearCache();
+
         // 1. Kiểm tra TextMesh Pro Resources & Cấu hình Sprite Importers cho TeaStall
         if (!Directory.Exists("Assets/TextMesh Pro/Resources"))
         {
@@ -100,6 +108,7 @@ public static class BuildTeaStallScene
         var avatarCache = systemsGo.AddComponent<AvatarCache>();
         var liveBridge = systemsGo.AddComponent<TikTokLiveBridge>();
         var stallManager = systemsGo.AddComponent<TeaStallManager>();
+        stallManager.EnsureInitialized();
 
         // 8. Dựng Môi trường Vỉa hè Phố Cổ Hà Nội chuẩn mẫu TikTok Live
         BuildHanoiStreetEnvironment(stallManager);
@@ -137,38 +146,24 @@ public static class BuildTeaStallScene
             TextureImporter ti = AssetImporter.GetAtPath(assetPath) as TextureImporter;
             if (ti == null) continue;
 
-            bool needsReimport = false;
-            if (ti.textureType != TextureImporterType.Sprite)
-            {
-                ti.textureType = TextureImporterType.Sprite;
-                needsReimport = true;
-            }
-            if (ti.spriteImportMode != SpriteImportMode.Single)
-            {
-                ti.spriteImportMode = SpriteImportMode.Single;
-                needsReimport = true;
-            }
-            if (!ti.alphaIsTransparency)
-            {
-                ti.alphaIsTransparency = true;
-                needsReimport = true;
-            }
-            if (ti.mipmapEnabled)
-            {
-                ti.mipmapEnabled = false;
-                needsReimport = true;
-            }
-            if (ti.filterMode != FilterMode.Bilinear)
-            {
-                ti.filterMode = FilterMode.Bilinear;
-                needsReimport = true;
-            }
+            TextureImporterSettings tis = new TextureImporterSettings();
+            ti.ReadTextureSettings(tis);
+            tis.spriteMode = (int)SpriteImportMode.Single;
+            tis.spriteMeshType = SpriteMeshType.FullRect; // FullRect (0) để không bị rách/méo mesh!
+            tis.spriteAlignment = (int)SpriteAlignment.Center;
+            tis.spritePivot = new Vector2(0.5f, 0.5f);
+            tis.alphaIsTransparency = true;
+            tis.mipmapEnabled = false;
+            tis.filterMode = FilterMode.Bilinear;
+            ti.SetTextureSettings(tis);
 
-            if (needsReimport)
-            {
-                ti.SaveAndReimport();
-                anyChanged = true;
-            }
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.alphaIsTransparency = true;
+            ti.mipmapEnabled = false;
+            ti.filterMode = FilterMode.Bilinear;
+            ti.SaveAndReimport();
+            anyChanged = true;
         }
 
         if (anyChanged)
@@ -247,7 +242,7 @@ public static class BuildTeaStallScene
             bgGo.transform.position = new Vector3(0f, 1.2f, 0f);
             var bgSr = bgGo.AddComponent<SpriteRenderer>();
             bgSr.sprite = streetBgSprite;
-            bgSr.sortingOrder = 0;
+            bgSr.sortingOrder = -20;
 
             float spriteH = streetBgSprite.rect.height / streetBgSprite.pixelsPerUnit;
             if (spriteH > 0.01f)
@@ -267,105 +262,59 @@ public static class BuildTeaStallScene
             var wallSr = wallGo.AddComponent<SpriteRenderer>();
             wallSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
             wallSr.color = TeaStallPalette.HanoiWallYellow;
-            wallSr.sortingOrder = 1;
+            wallSr.sortingOrder = -20;
+
+            // Mặt đường & vỉa hè
+            GameObject pavementGo = new GameObject("HanoiPavement");
+            pavementGo.transform.SetParent(envRoot.transform, false);
+            pavementGo.transform.position = new Vector3(0f, -1.2f, 0f);
+            pavementGo.transform.localScale = new Vector3(8.5f, 4.8f, 1f);
+            var pavSr = pavementGo.AddComponent<SpriteRenderer>();
+            pavSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
+            pavSr.color = new Color(TeaStallPalette.PavementDark.r, TeaStallPalette.PavementDark.g, TeaStallPalette.PavementDark.b, 0.35f);
+            pavSr.sortingOrder = -18;
         }
 
-        // ==================== 2. MẶT ĐƯỜNG & SÂN GẠCH VỈA HÈ ====================
-        GameObject pavementGo = new GameObject("HanoiPavement");
-        pavementGo.transform.SetParent(envRoot.transform, false);
-        pavementGo.transform.position = new Vector3(0f, -1.2f, 0f);
-        pavementGo.transform.localScale = new Vector3(8.5f, 4.8f, 1f);
-        var pavSr = pavementGo.AddComponent<SpriteRenderer>();
-        pavSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
-        pavSr.color = new Color(TeaStallPalette.PavementDark.r, TeaStallPalette.PavementDark.g, TeaStallPalette.PavementDark.b, 0.35f);
-        pavSr.sortingOrder = 2;
-
-        // Vạch sơn trắng kẻ ranh giới vỉa hè (Y = -3.2f)
-        GameObject curbLineGo = new GameObject("PavementCurbLine");
-        curbLineGo.transform.SetParent(envRoot.transform, false);
-        curbLineGo.transform.position = new Vector3(0f, -3.2f, 0f);
-        curbLineGo.transform.localScale = new Vector3(8.5f, 0.08f, 1f);
-        var curbSr = curbLineGo.AddComponent<SpriteRenderer>();
-        curbSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
-        curbSr.color = Color.white;
-        curbSr.sortingOrder = 3;
-
-        // ==================== 3. QUẦY TRÀ ĐÁ CỦA BÀ TÁM (X = 0f, Y = 1.15f) ====================
-        Sprite counterSprite = Resources.Load<Sprite>("TeaStall/Sprites/prop_tea_counter");
-        GameObject stallTableGo = new GameObject("TeaStallCounterTable");
-        stallTableGo.transform.SetParent(envRoot.transform, false);
-        stallTableGo.transform.position = new Vector3(0f, 1.15f, 0f);
-        var tableSr = stallTableGo.AddComponent<SpriteRenderer>();
-        tableSr.sortingOrder = 6;
-
-        if (counterSprite != null)
-        {
-            tableSr.sprite = counterSprite;
-            tableSr.transform.localScale = new Vector3(0.85f, 0.85f, 1f);
-        }
-        else
-        {
-            stallTableGo.transform.localScale = new Vector3(3.2f, 0.70f, 1f);
-            tableSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
-            tableSr.color = TeaStallPalette.AntiqueWood;
-
-            // Biển hiệu vỉa hè
-            GameObject signboardGo = new GameObject("Signboard");
-            signboardGo.transform.SetParent(stallTableGo.transform, false);
-            signboardGo.transform.localPosition = new Vector3(0f, -0.05f, 0f);
-            var signTmp = signboardGo.AddComponent<TextMeshPro>();
-            signTmp.alignment = TextAlignmentOptions.Center;
-            signTmp.fontSize = 2.0f;
-            signTmp.fontStyle = FontStyles.Bold;
-            signTmp.color = TeaStallPalette.NeonGold;
-            signTmp.outlineWidth = 0.25f;
-            signTmp.outlineColor = Color.black;
-            signTmp.sortingOrder = 7;
-            signTmp.text = "🍵 TRÀ ĐÁ BÀ TÁM • THUỐC LÀO TIÊN LÃNG 🍵";
-
-            // Props trên quầy
-            CreateStallProp(envRoot.transform, new Vector3(-1.0f, 1.55f, 0f), FallbackSpriteType.Circle, new Color(0.85f, 0.75f, 0.50f), new Vector3(0.5f, 0.5f, 1f), 8);
-            CreateStallProp(envRoot.transform, new Vector3(-0.55f, 1.6f, 0f), FallbackSpriteType.RoundedRect, TeaStallPalette.RangDongRed, new Vector3(0.35f, 0.6f, 1f), 8);
-            CreateStallProp(envRoot.transform, new Vector3(0.55f, 1.55f, 0f), FallbackSpriteType.RoundedRect, new Color(0.95f, 0.90f, 0.75f, 0.85f), new Vector3(0.45f, 0.45f, 1f), 8);
-            CreateStallProp(envRoot.transform, new Vector3(1.1f, 1.5f, 0f), FallbackSpriteType.DieuCayPipe, Color.white, new Vector3(0.55f, 0.55f, 1f), 8);
-        }
-
-        // ==================== 4. NPC BÀ TÁM TRÀ ĐÁ ====================
+        // ==================== 2. NPC BÀ TÁM TRÀ ĐÁ & QUẦY BÀN NHỰA ĐỎ MUSE AI ====================
         GameObject teaLadyGo = new GameObject("TeaLadyNpc");
         teaLadyGo.transform.SetParent(envRoot.transform, false);
+        teaLadyGo.transform.position = new Vector3(0f, 1.30f, -0.5f);
         var teaLadyAgent = teaLadyGo.AddComponent<StreetNpcAgent>();
-        teaLadyAgent.SetupAsTeaLady(new Vector3(0f, 1.75f, 0f));
+        teaLadyAgent.SetupAsTeaLady(new Vector3(0f, 1.30f, -0.5f));
         stallManager.TeaLady = teaLadyAgent;
+
+        // Đặt 4 Bàn Nhựa Đỏ + Trà Đá của MUSE AI (prop_tea_counter) ở 2 dãy Trái - Phải
+        Sprite redTableSprite = Resources.Load<Sprite>("TeaStall/Sprites/prop_tea_counter");
+        if (redTableSprite != null)
+        {
+            Vector3[] tablePositions = new Vector3[]
+            {
+                new Vector3(-1.80f,  0.15f, -0.3f),
+                new Vector3( 1.80f,  0.15f, -0.3f),
+                new Vector3(-1.80f, -1.20f, -0.3f),
+                new Vector3( 1.80f, -1.20f, -0.3f)
+            };
+            for (int i = 0; i < tablePositions.Length; i++)
+            {
+                GameObject tblGo = new GameObject("MuseRedPlasticTable_" + i);
+                tblGo.transform.SetParent(envRoot.transform, false);
+                tblGo.transform.position = tablePositions[i];
+                tblGo.transform.localScale = new Vector3(0.22f, 0.22f, 1f);
+                var tblSr = tblGo.AddComponent<SpriteRenderer>();
+                tblSr.sprite = redTableSprite;
+                tblSr.sortingOrder = 5;
+            }
+        }
 
         // Đèn lồng vàng chiếu sáng quầy Bà Tám
         GameObject stallLightGo = new GameObject("StallLanternLight");
         stallLightGo.transform.SetParent(envRoot.transform, false);
-        stallLightGo.transform.position = new Vector3(0f, 2.1f, 0f);
+        stallLightGo.transform.position = new Vector3(0f, 2.1f, -1f);
         var lanternLight = stallLightGo.AddComponent<Light2D>();
         lanternLight.lightType = Light2D.LightType.Point;
         lanternLight.color = TeaStallPalette.WarmLanternGlow;
         lanternLight.intensity = 1.35f;
         lanternLight.pointLightOuterRadius = 5.5f;
-
-        // ==================== 5. 6 BÀN NHỰA ĐỎ VỈA HÈ XẾP 2 DÃY TRÁI / PHẢI ====================
-        // Dãy Bàn Trái (X = -2.2f)
-        CreatePlasticTable(envRoot.transform, new Vector3(-2.2f, 0.45f, 0f), TeaStallPalette.PlasticRed);
-        CreatePlasticTable(envRoot.transform, new Vector3(-2.2f, -1.15f, 0f), TeaStallPalette.PlasticRed);
-        CreatePlasticTable(envRoot.transform, new Vector3(-2.2f, -2.65f, 0f), TeaStallPalette.PlasticRed);
-
-        // Dãy Bàn Phải (X = +2.2f)
-        CreatePlasticTable(envRoot.transform, new Vector3(2.2f, 0.45f, 0f), TeaStallPalette.PlasticRed);
-        CreatePlasticTable(envRoot.transform, new Vector3(2.2f, -1.15f, 0f), TeaStallPalette.PlasticRed);
-        CreatePlasticTable(envRoot.transform, new Vector3(2.2f, -2.65f, 0f), TeaStallPalette.PlasticRed);
-
-        // NGAI VÀNG VIP Ở CHÍNH GIỮA LỐI ĐI (X = 0f, Y = -1.1f)
-        GameObject throneGo = new GameObject("VipSofaThroneProp");
-        throneGo.transform.SetParent(envRoot.transform, false);
-        throneGo.transform.position = new Vector3(0f, -1.1f, 0f);
-        throneGo.transform.localScale = new Vector3(0.85f, 0.85f, 1f);
-        var throneSr = throneGo.AddComponent<SpriteRenderer>();
-        throneSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.SofaThrone);
-        throneSr.sortingOrder = 7;
     }
 
     private static void CreatePlasticTable(Transform parent, Vector3 pos, Color color)

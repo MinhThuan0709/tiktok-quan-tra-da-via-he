@@ -60,27 +60,27 @@ namespace TikTokTeaStall
             // Bong bóng thoại
             GameObject bubRoot = new GameObject("NpcSpeechBubble");
             bubRoot.transform.SetParent(transform, false);
-            bubRoot.transform.localPosition = new Vector3(0f, 1.8f, 0f);
+            bubRoot.transform.localPosition = new Vector3(0f, 1.15f, 0f);
             _speechBubbleRoot = bubRoot.transform;
 
             GameObject bubBg = new GameObject("BubbleBg");
             bubBg.transform.SetParent(_speechBubbleRoot, false);
-            bubBg.transform.localScale = new Vector3(3.2f, 1.1f, 1f);
+            bubBg.transform.localScale = new Vector3(1.85f, 0.52f, 1f);
             _speechBubbleSr = bubBg.AddComponent<SpriteRenderer>();
             _speechBubbleSr.sortingOrder = 45;
-            _speechBubbleSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
+            _speechBubbleSr.sprite = TeaStallPalette.GetOrLoadSprite("ui_speech_bubble_npc", FallbackSpriteType.RoundedRect);
             _speechBubbleSr.color = new Color(1.0f, 0.95f, 0.85f); // Màu vàng cam ấm áp
 
             GameObject bubTxt = new GameObject("BubbleText");
             bubTxt.transform.SetParent(_speechBubbleRoot, false);
-            bubTxt.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+            bubTxt.transform.localPosition = new Vector3(0f, 0.01f, 0f);
             _speechTmp = bubTxt.AddComponent<TextMeshPro>();
             _speechTmp.alignment = TextAlignmentOptions.Center;
-            _speechTmp.fontSize = 2.5f;
+            _speechTmp.fontSize = 0.78f;
             _speechTmp.color = new Color(0.12f, 0.10f, 0.12f);
             _speechTmp.fontStyle = FontStyles.Bold;
             _speechTmp.sortingOrder = 46;
-            _speechTmp.rectTransform.sizeDelta = new Vector2(3.0f, 1.0f);
+            _speechTmp.rectTransform.sizeDelta = new Vector2(1.75f, 0.46f);
             _speechTmp.text = "";
 
             _speechBubbleRoot.gameObject.SetActive(false);
@@ -91,23 +91,22 @@ namespace TikTokTeaStall
         /// </summary>
         public void SetupAsTeaLady(Vector3 stallPos)
         {
+            if (_bodySr == null) BuildNpcHierarchy();
             IsTeaLady = true;
             _homeStallPosition = stallPos;
             transform.position = stallPos;
 
             _bodySr.sprite = TeaStallPalette.GetOrLoadSprite("npc_ba_tam", FallbackSpriteType.TeaLadyAvatar);
-            _bodySr.transform.localScale = new Vector3(0.7f, 0.7f, 1f);
+            _bodySr.transform.localScale = new Vector3(0.32f, 0.32f, 1f);
 
-            // Quạt nan phe phẩy
-            _propSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
-            _propSr.color = new Color(0.85f, 0.72f, 0.45f); // Quạt nan vàng
-            _propSr.transform.localScale = new Vector3(0.3f, 0.45f, 1f);
+            // Quạt nan phe phẩy (ẩn nếu sprite bà Tám đã bưng khay trà)
+            _propSr.gameObject.SetActive(false);
 
             // Đổi màu bong bóng thoại Bà Tám thành Vàng Cam rực rỡ đặc trưng
             _speechBubbleSr.color = new Color(1.0f, 0.90f, 0.65f);
-            _speechBubbleRoot.localPosition = new Vector3(0f, 2.0f, 0f);
+            _speechBubbleRoot.localPosition = new Vector3(0f, 1.05f, 0f);
 
-            StartCoroutine(TeaLadyIdleAnimation());
+            if (Application.isPlaying) StartCoroutine(TeaLadyIdleAnimation());
         }
 
         /// <summary>
@@ -115,6 +114,7 @@ namespace TikTokTeaStall
         /// </summary>
         public void SetupAsStreetNpc(StreetNpcType type)
         {
+            if (_bodySr == null) BuildNpcHierarchy();
             IsTeaLady = false;
             NpcType = type;
 
@@ -123,40 +123,37 @@ namespace TikTokTeaStall
                 case StreetNpcType.GrabDriver:
                     _bodySr.sprite = TeaStallPalette.GetOrLoadSprite("npc_grab_driver", FallbackSpriteType.Circle);
                     _bodySr.color = Color.white;
-                    _bodySr.transform.localScale = new Vector3(0.65f, 0.65f, 1f);
+                    _bodySr.transform.localScale = new Vector3(0.32f, 0.32f, 1f);
                     break;
 
                 case StreetNpcType.LotteryVendor:
                     _bodySr.sprite = TeaStallPalette.GetOrLoadSprite("npc_lottery_lady", FallbackSpriteType.Circle);
                     _bodySr.color = Color.white;
-                    _bodySr.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
+                    _bodySr.transform.localScale = new Vector3(0.30f, 0.30f, 1f);
                     break;
 
                 case StreetNpcType.BreadVendor:
                     _bodySr.sprite = TeaStallPalette.GetOrLoadSprite("npc_banh_mi_cart", FallbackSpriteType.Circle);
                     _bodySr.color = Color.white;
-                    _bodySr.transform.localScale = new Vector3(0.65f, 0.65f, 1f);
+                    _bodySr.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
                     break;
 
                 case StreetNpcType.ShoeShiner:
                     _bodySr.sprite = TeaStallPalette.GetOrLoadSprite("char_tier1_toong", FallbackSpriteType.Circle);
                     _bodySr.color = Color.white;
-                    _bodySr.transform.localScale = new Vector3(0.55f, 0.55f, 1f);
+                    _bodySr.transform.localScale = new Vector3(0.24f, 0.24f, 1f);
                     break;
 
                 case StreetNpcType.StreetSinger:
                     _bodySr.sprite = TeaStallPalette.GetOrLoadSprite("npc_keo_keo_singer", FallbackSpriteType.Circle);
                     _bodySr.color = Color.white;
-                    _bodySr.transform.localScale = new Vector3(0.65f, 0.65f, 1f);
+                    _bodySr.transform.localScale = new Vector3(0.30f, 0.30f, 1f);
                     break;
 
                 case StreetNpcType.WardPatrol:
                     _bodySr.sprite = TeaStallPalette.GetOrLoadSprite("npc_trat_tu_phuong", FallbackSpriteType.Circle);
                     _bodySr.color = Color.white;
-                    _bodySr.transform.localScale = new Vector3(0.65f, 0.65f, 1f);
-                    break;
-            }
-                    _propSr.transform.localScale = new Vector3(0.25f, 0.25f, 1f);
+                    _bodySr.transform.localScale = new Vector3(0.32f, 0.32f, 1f);
                     break;
             }
         }
@@ -166,8 +163,19 @@ namespace TikTokTeaStall
         /// </summary>
         public void Say(string text, float duration = 5.0f)
         {
+            if (_speechTmp == null) BuildNpcHierarchy();
             if (_speechCoroutine != null) StopCoroutine(_speechCoroutine);
-            _speechCoroutine = StartCoroutine(SpeechCoroutine(text, duration));
+            if (_speechTmp != null) _speechTmp.text = text;
+            if (_speechBubbleRoot != null)
+            {
+                _speechBubbleRoot.localScale = Vector3.one;
+                _speechBubbleRoot.gameObject.SetActive(true);
+            }
+
+            if (Application.isPlaying)
+            {
+                _speechCoroutine = StartCoroutine(SpeechCoroutine(text, duration));
+            }
         }
 
         private IEnumerator SpeechCoroutine(string text, float duration)

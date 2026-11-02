@@ -79,41 +79,35 @@ namespace TikTokTeaStall
         /// </summary>
         private void BuildCustomerHierarchy()
         {
-            // 1. Thân nhân vật
+            // 1. Thân nhân vật (100% Sprite PNG nghệ thuật MUSE AI)
             GameObject bodyGo = new GameObject("BodyVisual");
             bodyGo.transform.SetParent(transform, false);
             _bodySr = bodyGo.AddComponent<SpriteRenderer>();
             _bodySr.sortingOrder = 10;
 
-            // 2. Ghế ngồi phía dưới
+            // 2. Ghế ngồi (TẮT procedural, Sprite nhân vật MUSE AI đã có dáng ngồi & ghế chuẩn)
             GameObject chairGo = new GameObject("ChairVisual");
             chairGo.transform.SetParent(transform, false);
-            chairGo.transform.localPosition = new Vector3(0f, -0.25f, 0f);
             _chairSr = chairGo.AddComponent<SpriteRenderer>();
-            _chairSr.sortingOrder = 8;
+            _chairSr.enabled = false;
 
-            // 3. Đôi cánh sau lưng (VIP)
+            // 3. Đôi cánh sau lưng (TẮT procedural)
             GameObject wingsGo = new GameObject("BackWings");
             wingsGo.transform.SetParent(transform, false);
-            wingsGo.transform.localPosition = new Vector3(0f, 0.25f, 0f);
             _wingsSr = wingsGo.AddComponent<SpriteRenderer>();
-            _wingsSr.sortingOrder = 7;
-            _wingsSr.gameObject.SetActive(false);
+            _wingsSr.enabled = false;
 
             // 4. Thú cưng mini (Corgi / Rồng con)
             GameObject petGo = new GameObject("MiniPet");
             petGo.transform.SetParent(transform, false);
-            petGo.transform.localPosition = new Vector3(0.55f, -0.15f, 0f);
             _petSr = petGo.AddComponent<SpriteRenderer>();
-            _petSr.sortingOrder = 12;
-            _petSr.gameObject.SetActive(false);
+            _petSr.enabled = false;
 
-            // 5. Đồ uống / Đĩa hạt trên bàn
+            // 5. Đồ trên bàn (TẮT procedural shapes)
             GameObject itemGo = new GameObject("TableItem");
             itemGo.transform.SetParent(transform, false);
-            itemGo.transform.localPosition = new Vector3(0.25f, -0.05f, 0f);
             _tableItemSr = itemGo.AddComponent<SpriteRenderer>();
-            _tableItemSr.sortingOrder = 14;
+            _tableItemSr.enabled = false;
 
             // ==================== CỤM UI 3 TẦNG TRÊN ĐẦU ====================
             GameObject stackGo = new GameObject("OverheadStack");
@@ -121,92 +115,79 @@ namespace TikTokTeaStall
             stackGo.transform.localPosition = Vector3.zero;
             _overheadStack = stackGo.transform;
 
-            // ----- TẦNG 1 (Sát đầu: Y = +0.95f): Avatar tròn + Tên @Nickname -----
+            // ----- TẦNG 1 (Sát đầu: Y = +0.58f): Tên @Nickname -----
             GameObject t1Go = new GameObject("Tier1_NameAvatar");
             t1Go.transform.SetParent(_overheadStack, false);
-            t1Go.transform.localPosition = new Vector3(0f, 0.95f, 0f);
+            t1Go.transform.localPosition = new Vector3(0f, 0.58f, 0f);
             _tier1Root = t1Go.transform;
 
             GameObject avGo = new GameObject("AvatarIcon");
             avGo.transform.SetParent(_tier1Root, false);
-            avGo.transform.localPosition = new Vector3(-0.65f, 0f, 0f);
-            avGo.transform.localScale = new Vector3(0.32f, 0.32f, 1f);
             _avatarSr = avGo.AddComponent<SpriteRenderer>();
-            _avatarSr.sortingOrder = 30;
-            _avatarSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.Circle);
+            _avatarSr.enabled = false;
 
             GameObject nameGo = new GameObject("NicknameText");
             nameGo.transform.SetParent(_tier1Root, false);
-            nameGo.transform.localPosition = new Vector3(0.05f, 0f, 0f);
+            nameGo.transform.localPosition = Vector3.zero;
             _nameTmp = nameGo.AddComponent<TextMeshPro>();
-            _nameTmp.alignment = TextAlignmentOptions.MidlineLeft;
-            _nameTmp.fontSize = 2.4f;
+            _nameTmp.alignment = TextAlignmentOptions.Center;
+            _nameTmp.fontSize = 0.88f;
             _nameTmp.color = Color.white;
             _nameTmp.fontStyle = FontStyles.Bold;
+            _nameTmp.outlineWidth = 0.24f;
+            _nameTmp.outlineColor = Color.black;
             _nameTmp.sortingOrder = 30;
             _nameTmp.text = "@Khách";
 
-            // ----- TẦNG 2 (TÂM ĐIỂM HÚT MẮT: Y = +1.65f): Khung Danh Hiệu Nghệ Thuật -----
+            // ----- TẦNG 2 (TÂM ĐIỂM: Y = +0.86f): Khung Danh Hiệu MUSE AI -----
             GameObject t2Go = new GameObject("Tier2_TitleBadgeRoot");
             t2Go.transform.SetParent(_overheadStack, false);
-            t2Go.transform.localPosition = new Vector3(0f, 1.65f, 0f);
+            t2Go.transform.localPosition = new Vector3(0f, 0.86f, 0f);
             _tier2TitleRoot = t2Go.transform;
 
-            // Hào quang tỏa sáng nền
             GameObject glowGo = new GameObject("BadgeGlow");
             glowGo.transform.SetParent(_tier2TitleRoot, false);
-            glowGo.transform.localScale = new Vector3(1.4f, 0.55f, 1f);
             _badgeGlowSr = glowGo.AddComponent<SpriteRenderer>();
-            _badgeGlowSr.sortingOrder = 24;
-            _badgeGlowSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
-            _badgeGlowSr.color = new Color(1f, 0.8f, 0f, 0.35f);
+            _badgeGlowSr.enabled = false;
 
-            // Cánh trái khung danh hiệu
             GameObject lWingGo = new GameObject("BadgeLeftWing");
             lWingGo.transform.SetParent(_tier2TitleRoot, false);
-            lWingGo.transform.localPosition = new Vector3(-1.1f, 0f, 0f);
-            lWingGo.transform.localScale = new Vector3(0.45f, 0.45f, 1f);
             _badgeLeftWingSr = lWingGo.AddComponent<SpriteRenderer>();
-            _badgeLeftWingSr.sortingOrder = 25;
-            _badgeLeftWingSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.WingPair);
+            _badgeLeftWingSr.enabled = false;
 
-            // Cánh phải khung danh hiệu
             GameObject rWingGo = new GameObject("BadgeRightWing");
             rWingGo.transform.SetParent(_tier2TitleRoot, false);
-            rWingGo.transform.localPosition = new Vector3(1.1f, 0f, 0f);
-            rWingGo.transform.localScale = new Vector3(-0.45f, 0.45f, 1f); // lật ngang
             _badgeRightWingSr = rWingGo.AddComponent<SpriteRenderer>();
-            _badgeRightWingSr.sortingOrder = 25;
-            _badgeRightWingSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.WingPair);
+            _badgeRightWingSr.enabled = false;
 
-            // Khung chính
+            // Khung danh hiệu chính (100% Sprite MUSE AI: wood, neon_wings, royal_dragon)
             GameObject badgeFrameGo = new GameObject("BadgeFrame");
             badgeFrameGo.transform.SetParent(_tier2TitleRoot, false);
-            badgeFrameGo.transform.localScale = new Vector3(1.9f, 0.45f, 1f);
+            badgeFrameGo.transform.localScale = new Vector3(0.24f, 0.24f, 1f);
             _badgeFrameSr = badgeFrameGo.AddComponent<SpriteRenderer>();
             _badgeFrameSr.sortingOrder = 26;
-            _badgeFrameSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.BadgeFrameWood);
+            _badgeFrameSr.sprite = TeaStallPalette.GetOrLoadSprite("badge_frame_wood", FallbackSpriteType.BadgeFrameWood);
 
-            // Chữ Danh Hiệu Cấp Bậc / Tùy Biến
+            // Chữ Danh Hiệu căn giữa chuẩn xác vào lòng khung
             GameObject titleTxtGo = new GameObject("BadgeTitleText");
             titleTxtGo.transform.SetParent(_tier2TitleRoot, false);
-            titleTxtGo.transform.localPosition = new Vector3(0f, 0f, 0f);
+            titleTxtGo.transform.localPosition = new Vector3(0f, 0.01f, 0f);
             _badgeTitleTmp = titleTxtGo.AddComponent<TextMeshPro>();
             _badgeTitleTmp.alignment = TextAlignmentOptions.Center;
-            _badgeTitleTmp.fontSize = 2.6f;
+            _badgeTitleTmp.fontSize = 0.72f;
             _badgeTitleTmp.fontStyle = FontStyles.Bold;
-            _badgeTitleTmp.outlineWidth = 0.25f;
+            _badgeTitleTmp.outlineWidth = 0.22f;
             _badgeTitleTmp.outlineColor = Color.black;
             _badgeTitleTmp.sortingOrder = 28;
-            _badgeTitleTmp.text = "🩴 KHÁCH DÉP TỔ ONG";
+            _badgeTitleTmp.text = "[T1] DÉP TỔ ONG";
 
-            // Huy Hiệu Độc Tôn Cướp Ngôi (King of the Hill) nằm trên đỉnh khung danh hiệu
+            // Huy Hiệu Độc Tôn KOTH
             GameObject kothTxtGo = new GameObject("KothBadgeText");
             kothTxtGo.transform.SetParent(_tier2TitleRoot, false);
-            kothTxtGo.transform.localPosition = new Vector3(0f, 0.35f, 0f);
+            kothTxtGo.transform.localPosition = new Vector3(0f, 0.22f, 0f);
             _kothBadgeTmp = kothTxtGo.AddComponent<TextMeshPro>();
             _kothBadgeTmp.alignment = TextAlignmentOptions.Center;
-            _kothBadgeTmp.fontSize = 2.2f;
+            _kothBadgeTmp.fontSize = 0.68f;
             _kothBadgeTmp.fontStyle = FontStyles.Bold;
             _kothBadgeTmp.outlineWidth = 0.22f;
             _kothBadgeTmp.outlineColor = new Color(0.1f, 0f, 0.1f);
@@ -214,41 +195,36 @@ namespace TikTokTeaStall
             _kothBadgeTmp.text = "";
             _kothBadgeTmp.gameObject.SetActive(false);
 
-            // ----- TẦNG 3 (Trên cùng: Y = +2.45f): Bong Bóng Chat ZingMe -----
+            // ----- TẦNG 3 (Trên cùng: Y = +1.28f): Bong Bóng Chat ZingMe -----
             GameObject t3Go = new GameObject("Tier3_SpeechBubbleRoot");
             t3Go.transform.SetParent(_overheadStack, false);
-            t3Go.transform.localPosition = new Vector3(0f, 2.45f, 0f);
+            t3Go.transform.localPosition = new Vector3(0f, 1.28f, 0f);
             _tier3SpeechBubbleRoot = t3Go.transform;
 
             GameObject bubBgGo = new GameObject("BubbleBackground");
             bubBgGo.transform.SetParent(_tier3SpeechBubbleRoot, false);
-            bubBgGo.transform.localScale = new Vector3(2.5f, 0.9f, 1f);
+            bubBgGo.transform.localScale = new Vector3(1.55f, 0.46f, 1f);
             _speechBubbleSr = bubBgGo.AddComponent<SpriteRenderer>();
             _speechBubbleSr.sortingOrder = 40;
-            _speechBubbleSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
-            _speechBubbleSr.color = new Color(0.98f, 0.98f, 0.94f, 0.98f);
+            _speechBubbleSr.sprite = TeaStallPalette.GetOrLoadSprite("ui_speech_bubble_chat", FallbackSpriteType.RoundedRect);
+            _speechBubbleSr.color = new Color(0.99f, 0.97f, 0.92f, 0.96f);
 
-            // Mũi tên đuôi bong bóng trỏ xuống
             GameObject tailGo = new GameObject("BubbleTail");
             tailGo.transform.SetParent(_tier3SpeechBubbleRoot, false);
-            tailGo.transform.localPosition = new Vector3(0f, -0.45f, 0f);
-            tailGo.transform.localScale = new Vector3(0.2f, 0.2f, 1f);
             _speechTailSr = tailGo.AddComponent<SpriteRenderer>();
-            _speechTailSr.sortingOrder = 41;
-            _speechTailSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.Circle);
-            _speechTailSr.color = new Color(0.98f, 0.98f, 0.94f, 0.98f);
+            _speechTailSr.enabled = false;
 
             GameObject bubbleTxtGo = new GameObject("SpeechText");
             bubbleTxtGo.transform.SetParent(_tier3SpeechBubbleRoot, false);
-            bubbleTxtGo.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+            bubbleTxtGo.transform.localPosition = new Vector3(0f, 0.01f, 0f);
             _speechTmp = bubbleTxtGo.AddComponent<TextMeshPro>();
             _speechTmp.alignment = TextAlignmentOptions.Center;
-            _speechTmp.fontSize = 2.4f;
+            _speechTmp.fontSize = 0.74f;
             _speechTmp.color = new Color(0.12f, 0.10f, 0.12f);
             _speechTmp.fontStyle = FontStyles.Bold;
             _speechTmp.sortingOrder = 42;
             _speechTmp.text = "";
-            _speechTmp.rectTransform.sizeDelta = new Vector2(2.3f, 0.8f);
+            _speechTmp.rectTransform.sizeDelta = new Vector2(1.45f, 0.42f);
 
             _tier3SpeechBubbleRoot.gameObject.SetActive(false);
         }
@@ -258,6 +234,7 @@ namespace TikTokTeaStall
         /// </summary>
         public void Initialize(string userId, string nickname, string avatarUrl = "", int initialExp = 0)
         {
+            if (_bodySr == null) BuildCustomerHierarchy();
             UserId = userId;
             Nickname = string.IsNullOrEmpty(nickname) ? "Khách Vỉa Hè" : nickname;
             Exp = initialExp;
@@ -314,9 +291,17 @@ namespace TikTokTeaStall
                 TeaStallAudio.Instance.PlayTitleUpgradeFanfare();
             }
 
-            // Popup chúc mừng
-            ShowSpeechBubble($"🎉 THĂNG CẤP DANH HIỆU {TeaStallPalette.GetTierConfig(VipTier).Title}!", 4.5f);
-            StartCoroutine(PopScaleCoroutine(_tier2TitleRoot, 1.45f, 0.4f));
+            if (Application.isPlaying)
+            {
+                ShowSpeechBubble($"[LÊN CẤP] {TeaStallPalette.GetTierConfig(VipTier).Title}!", 3.5f);
+                StartCoroutine(PopScaleCoroutine(_tier2TitleRoot, 1.35f, 0.4f));
+            }
+        }
+
+        public void HideSpeechBubble()
+        {
+            if (_speechBubbleCoroutine != null) StopCoroutine(_speechBubbleCoroutine);
+            if (_tier3SpeechBubbleRoot != null) _tier3SpeechBubbleRoot.gameObject.SetActive(false);
         }
 
         /// <summary>
@@ -328,60 +313,31 @@ namespace TikTokTeaStall
             VipTier = config.Tier;
 
             // 1. Skin Thân Nhân Vật
-            _bodySr.sprite = TeaStallPalette.GetOrLoadSprite(config.SpriteResource, FallbackSpriteType.Circle);
+            Sprite charSprite = TeaStallPalette.GetOrLoadSprite(config.SpriteResource, FallbackSpriteType.Circle);
+            _bodySr.sprite = charSprite;
             _bodySr.color = Color.white;
-            _bodySr.transform.localScale = new Vector3(0.55f, 0.55f, 1f);
+            _bodySr.transform.localScale = new Vector3(0.24f, 0.24f, 1f);
 
-            // 2. Ghế ngồi
-            if (config.IsThroneChair)
-            {
-                _chairSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.SofaThrone);
-                _chairSr.color = Color.white;
-                _chairSr.transform.localScale = new Vector3(0.75f, 0.75f, 1f);
-            }
-            else
-            {
-                _chairSr.sprite = TeaStallPalette.GetFallbackSprite(
-                    config.ChairColor == TeaStallPalette.PlasticRed ? FallbackSpriteType.PlasticChairRed : FallbackSpriteType.PlasticChairBlue
-                );
-                _chairSr.color = Color.white;
-                _chairSr.transform.localScale = new Vector3(0.6f, 0.6f, 1f);
-            }
+            // 2. Ẩn 100% các lớp ghế/cánh/pet procedural
+            _chairSr.gameObject.SetActive(false);
+            _wingsSr.gameObject.SetActive(false);
+            _petSr.gameObject.SetActive(false);
 
-            // 3. Cánh lưng
-            _wingsSr.gameObject.SetActive(config.HasWings);
-            if (config.HasWings)
-            {
-                _wingsSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.WingPair);
-                _wingsSr.color = config.FrameGlowColor;
-                _wingsSr.transform.localScale = new Vector3(0.65f, 0.65f, 1f);
-            }
-
-            // 4. Thú cưng đi kèm
-            _petSr.gameObject.SetActive(config.HasPet);
-            if (config.HasPet)
-            {
-                _petSr.sprite = TeaStallPalette.GetFallbackSprite(
-                    config.PetType == "dragon" ? FallbackSpriteType.DragonPet : FallbackSpriteType.CorgiPet
-                );
-                _petSr.transform.localScale = new Vector3(0.35f, 0.35f, 1f);
-            }
-
-            // 5. Khung Danh Hiệu & Chữ Tầng 2
-            _badgeFrameSr.sprite = TeaStallPalette.GetOrLoadSprite(config.BadgeResource, 
+            // 3. Khung Danh Hiệu & Chữ Tầng 2
+            Sprite frameSprite = TeaStallPalette.GetOrLoadSprite(config.BadgeResource, 
                 config.Tier >= 6 ? FallbackSpriteType.BadgeFrameRoyalDragon :
-                config.Tier >= 4 ? FallbackSpriteType.BadgeFrameNeonWings :
-                config.Tier == 3 ? FallbackSpriteType.BadgeFrameFire : FallbackSpriteType.BadgeFrameWood
+                config.Tier >= 3 ? FallbackSpriteType.BadgeFrameNeonWings : FallbackSpriteType.BadgeFrameWood
             );
-            _badgeGlowSr.color = new Color(config.FrameGlowColor.r, config.FrameGlowColor.g, config.FrameGlowColor.b, 0.35f);
-            _badgeLeftWingSr.color = config.FrameGlowColor;
-            _badgeRightWingSr.color = config.FrameGlowColor;
+            _badgeFrameSr.sprite = frameSprite;
+            _badgeLeftWingSr.gameObject.SetActive(false);
+            _badgeRightWingSr.gameObject.SetActive(false);
+            _badgeFrameSr.transform.localScale = new Vector3(0.24f, 0.24f, 1f);
 
             string displayTitle = !string.IsNullOrEmpty(CustomTitle) ? CustomTitle : config.Title;
             _badgeTitleTmp.text = displayTitle;
             _badgeTitleTmp.color = config.TitleColor;
 
-            // 6. Cập nhật dòng King of the Hill (KOTH) nếu có
+            // 4. Cập nhật dòng King of the Hill (KOTH) nếu có
             if (!string.IsNullOrEmpty(CurrentKothTitle))
             {
                 _kothBadgeTmp.gameObject.SetActive(true);
@@ -412,8 +368,19 @@ namespace TikTokTeaStall
 
         public void ShowSpeechBubble(string message, float duration = 5.5f)
         {
+            if (_speechTmp == null) BuildCustomerHierarchy();
             if (_speechBubbleCoroutine != null) StopCoroutine(_speechBubbleCoroutine);
-            _speechBubbleCoroutine = StartCoroutine(SpeechBubbleCoroutine(message, duration));
+            if (_speechTmp != null) _speechTmp.text = message;
+            if (_tier3SpeechBubbleRoot != null)
+            {
+                _tier3SpeechBubbleRoot.localScale = Vector3.one;
+                _tier3SpeechBubbleRoot.gameObject.SetActive(true);
+            }
+
+            if (Application.isPlaying)
+            {
+                _speechBubbleCoroutine = StartCoroutine(SpeechBubbleCoroutine(message, duration));
+            }
         }
 
         private IEnumerator SpeechBubbleCoroutine(string text, float duration)
@@ -478,7 +445,7 @@ namespace TikTokTeaStall
             // Đặt cốc lại bàn
             yield return StartCoroutine(MoveTransform(_tableItemSr.transform, startPos, 0.25f));
 
-            ShowSpeechBubble("🍵 Mát ruột tỉnh cả người!", 3.5f);
+            ShowSpeechBubble("[ĐÃ] Mát ruột tỉnh cả người!", 3.5f);
         }
 
         /// <summary>
@@ -488,7 +455,7 @@ namespace TikTokTeaStall
         {
             if (TeaStallAudio.Instance != null) TeaStallAudio.Instance.PlaySunflowerCrack();
             StartCoroutine(PopScaleCoroutine(_tableItemSr.transform, 1.25f, 0.15f));
-            ShowSpeechBubble("🌻 Cắn hạt hướng dương giòn tan!", 2.5f);
+            ShowSpeechBubble("[RỐP] Hạt hướng dương giòn tan!", 2.5f);
         }
 
         /// <summary>
@@ -620,13 +587,20 @@ namespace TikTokTeaStall
         /// </summary>
         public void PanicRunFromPatrol(Vector3 safeWallPos)
         {
+            if (!Application.isPlaying)
+            {
+                IsPanicking = true;
+                transform.position = safeWallPos;
+                ShowSpeechBubble("[CHẠY] TRẬT TỰ PHƯỜNG! Ôm ghế né né!", 4.0f);
+                return;
+            }
             StartCoroutine(PanicRunCoroutine(safeWallPos));
         }
 
         private IEnumerator PanicRunCoroutine(Vector3 safeWallPos)
         {
             IsPanicking = true;
-            ShowSpeechBubble("😱 TRẬT TỰ PHƯỜNG! Ôm ghế né né!", 4.0f);
+            ShowSpeechBubble("[CHẠY] TRẬT TỰ PHƯỜNG! Ôm ghế né né!", 4.0f);
 
             // 1. Ôm ghế chạy lùi vào mép tường
             yield return StartCoroutine(MoveTransform(transform, safeWallPos, 0.65f));

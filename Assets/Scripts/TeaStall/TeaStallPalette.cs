@@ -100,9 +100,9 @@ namespace TikTokTeaStall
         public static readonly Color DeepInkBlack       = new Color(0.10f, 0.08f, 0.10f);
 
         // ==================== 3 DANH HIỆU ĐỘC TÔN (KING OF THE HILL) ====================
-        public const string KOTH_COMMENT = "🌪️ ĐỆ NHẤT CHÉM GIÓ";
-        public const string KOTH_LIKE    = "💖 CHIẾN THẦN THẢ TIM";
-        public const string KOTH_DONATE  = "👑 TRÙM BAO CẢ QUÁN";
+        public const string KOTH_COMMENT = "[KOTH] ĐỆ NHẤT CHÉM GIÓ";
+        public const string KOTH_LIKE    = "[KOTH] CHIẾN THẦN THẢ TIM";
+        public const string KOTH_DONATE  = "[KOTH] TRÙM BAO CẢ QUÁN";
 
         public static readonly Color KothCommentColor = new Color(0.20f, 0.90f, 1.00f); // Bão xanh lốc xoáy
         public static readonly Color KothLikeColor    = new Color(1.00f, 0.30f, 0.65f); // Tim hồng neon
@@ -114,7 +114,7 @@ namespace TikTokTeaStall
             new VipTierConfig(
                 tier: 1,
                 exp: 0,
-                title: "🩴 KHÁCH DÉP TỔ ONG",
+                title: "[T1] DÉP TỔ ONG",
                 spriteRes: "char_tier1_toong",
                 badgeRes: "badge_frame_wood",
                 titleColor: new Color(0.95f, 0.95f, 0.95f),
@@ -124,8 +124,8 @@ namespace TikTokTeaStall
             new VipTierConfig(
                 tier: 2,
                 exp: 50,
-                title: "🌻 THÁNH HƯỚNG DƯƠNG",
-                spriteRes: "char_tier2_flower",
+                title: "[T2] HƯỚNG DƯƠNG",
+                spriteRes: "char_tier2_sunflower",
                 badgeRes: "badge_frame_wood",
                 titleColor: new Color(1.00f, 0.92f, 0.30f),
                 glowColor: new Color(0.25f, 0.85f, 0.45f),
@@ -134,9 +134,9 @@ namespace TikTokTeaStall
             new VipTierConfig(
                 tier: 3,
                 exp: 200,
-                title: "🔥 CAO THỦ THUỐC LÀO",
+                title: "[T3] THUỐC LÀO",
                 spriteRes: "char_tier3_street",
-                badgeRes: "badge_frame_fire",
+                badgeRes: "badge_frame_neon_wings",
                 titleColor: new Color(1.00f, 0.55f, 0.20f),
                 glowColor: NeonPurple,
                 chairColor: PlasticRed,
@@ -147,8 +147,8 @@ namespace TikTokTeaStall
             new VipTierConfig(
                 tier: 4,
                 exp: 800,
-                title: "💎 DÂN CHƠI PHỐ CỔ",
-                spriteRes: "char_tier4_danchoi",
+                title: "[T4] DÂN CHƠI",
+                spriteRes: "char_tier4_cyber",
                 badgeRes: "badge_frame_neon_wings",
                 titleColor: NeonCyan,
                 glowColor: NeonCyan,
@@ -158,9 +158,9 @@ namespace TikTokTeaStall
             new VipTierConfig(
                 tier: 5,
                 exp: 2500,
-                title: "🪽 PHÚ BÀ / ĐẠI GIA VỈA HÈ",
+                title: "[T5] PHÚ BÀ",
                 spriteRes: "char_tier5_phuba",
-                badgeRes: "badge_frame_ruby_wings",
+                badgeRes: "badge_frame_royal_dragon",
                 titleColor: NeonRuby,
                 glowColor: NeonRuby,
                 chairColor: new Color(0.75f, 0.15f, 0.40f),
@@ -170,7 +170,7 @@ namespace TikTokTeaStall
             new VipTierConfig(
                 tier: 6,
                 exp: 6000,
-                title: "👑 THẦN TÀI BAO CẢ PHỐ 👑",
+                title: "[VIP] THẦN TÀI",
                 spriteRes: "char_tier6_vip",
                 badgeRes: "badge_frame_royal_dragon",
                 titleColor: NeonGold,
@@ -218,6 +218,12 @@ namespace TikTokTeaStall
         private static readonly Dictionary<FallbackSpriteType, Sprite> FallbackCache = new Dictionary<FallbackSpriteType, Sprite>();
         private static readonly Dictionary<string, Sprite> LoadedSpriteCache = new Dictionary<string, Sprite>();
 
+        public static void ClearCache()
+        {
+            LoadedSpriteCache.Clear();
+            FallbackCache.Clear();
+        }
+
         /// <summary>
         /// Nạp sprite từ Resources/TeaStall/Sprites hoặc fallback procedural đẹp mắt.
         /// </summary>
@@ -230,11 +236,25 @@ namespace TikTokTeaStall
                     return cached;
                 }
 
-                // Cố gắng load từ Resources
+                // Cố gắng load từ Resources (kể cả Wave 2 hoặc fallback sang Wave 1 của MUSE AI)
                 Sprite resSprite = Resources.Load<Sprite>("TeaStall/Sprites/" + resourceName);
                 if (resSprite == null)
                 {
                     resSprite = Resources.Load<Sprite>(resourceName);
+                }
+                if (resSprite == null)
+                {
+                    // Nếu đang chờ MUSE AI push Wave 2 thì tự động dùng Sprite Wave 1 của MUSE AI (TUYỆT ĐỐI KHÔNG VẼ HÌNH TỰ CHẾ)
+                    string wave1Alias = null;
+                    if (resourceName == "char_tier2_sunflower") wave1Alias = "char_tier1_toong";
+                    else if (resourceName == "char_tier4_cyber") wave1Alias = "char_tier3_street";
+                    else if (resourceName == "char_tier5_phuba") wave1Alias = "char_tier6_vip";
+                    else if (resourceName == "npc_shoe_shiner") wave1Alias = "char_tier1_toong";
+
+                    if (!string.IsNullOrEmpty(wave1Alias))
+                    {
+                        resSprite = Resources.Load<Sprite>("TeaStall/Sprites/" + wave1Alias);
+                    }
                 }
                 if (resSprite != null)
                 {
@@ -252,6 +272,25 @@ namespace TikTokTeaStall
             if (FallbackCache.TryGetValue(type, out Sprite existing) && existing != null)
             {
                 return existing;
+            }
+
+            if (type == FallbackSpriteType.RoundedRect || type == FallbackSpriteType.ChatBubbleNineSlice)
+            {
+                Sprite sp = Resources.Load<Sprite>("TeaStall/Sprites/ui_box_white");
+                if (sp != null)
+                {
+                    FallbackCache[type] = sp;
+                    return sp;
+                }
+            }
+            else if (type == FallbackSpriteType.Circle)
+            {
+                Sprite sp = Resources.Load<Sprite>("TeaStall/Sprites/ui_circle_white");
+                if (sp != null)
+                {
+                    FallbackCache[type] = sp;
+                    return sp;
+                }
             }
 
             Sprite created = GenerateFallbackSprite(type);

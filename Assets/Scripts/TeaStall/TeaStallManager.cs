@@ -27,7 +27,16 @@ namespace TikTokTeaStall
     /// </summary>
     public class TeaStallManager : MonoBehaviour
     {
-        public static TeaStallManager Instance { get; private set; }
+        private static TeaStallManager _instance;
+        public static TeaStallManager Instance
+        {
+            get
+            {
+                if (_instance == null) _instance = UnityEngine.Object.FindAnyObjectByType<TeaStallManager>();
+                return _instance;
+            }
+            set => _instance = value;
+        }
 
         [Header("Tham Chiếu Hierarchy")]
         public Transform CustomerParent;
@@ -42,7 +51,7 @@ namespace TikTokTeaStall
         public int TotalTeaSold = 128;
         public int TotalCheersCount = 42;
         public float CheersProgress = 44f; // 0 -> 100%
-        public string LatestTickerText = "🔥 @Tuan_PhoCo vừa rít Điếu Cày Thuốc Lào • 🍻 Cả quán đồng thanh DÔ lần thứ 42!";
+        public string LatestTickerText = "[HOT] @Tuấn Phố Cổ vừa rít Điếu Cày Thuốc Lào • [DÔ] Cả quán đồng thanh DÔ lần thứ 42!";
 
         // Thống kê King of the Hill (KOTH)
         private readonly Dictionary<string, int> _commentCounts = new Dictionary<string, int>();
@@ -84,7 +93,14 @@ namespace TikTokTeaStall
             }
             Instance = this;
 
+            EnsureInitialized();
+        }
+
+        public void EnsureInitialized()
+        {
+            TeaStallPalette.ClearCache();
             InitializeSeats();
+            InitializeHud();
         }
 
         private void Start()
@@ -98,7 +114,7 @@ namespace TikTokTeaStall
 
             if (TeaLady != null)
             {
-                TeaLady.Say("🏮 Quán Trà Đá Bà Tám mở cửa! Bình luận là có trà đá mát rượi ngay!", 5.5f);
+                TeaLady.Say("Quán Trà Đá Bà Tám mở cửa! Bình luận là có trà đá mát rượi ngay!", 5.5f);
             }
         }
 
@@ -122,170 +138,167 @@ namespace TikTokTeaStall
         // ==================== CẤU HÌNH 16 GHẾ NGỒI 2 DÃY TRÁI - PHẢI ====================
         private void InitializeSeats()
         {
-            // Ngai Vàng VIP ở trung tâm tiền cảnh (ghế 0)
-            _seats[0] = new SeatInfo { Index = 0, Position = new Vector3(0.0f, -1.1f, 0f), IsOccupied = false, IsThrone = true };
+            // Ngai Vàng VIP ở trung tâm (ghế 0)
+            _seats[0] = new SeatInfo { Index = 0, Position = new Vector3(0.0f, -0.85f, -0.5f), IsOccupied = false, IsThrone = true };
 
-            // DÃY BÀN TRÁI (X ~ -2.2f)
-            // Cụm Bàn 1 (Y = +0.2f): 2 ghế
-            _seats[1] = new SeatInfo { Index = 1, Position = new Vector3(-2.85f, 0.45f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[2] = new SeatInfo { Index = 2, Position = new Vector3(-1.55f, 0.45f, 0f), IsOccupied = false, IsThrone = false };
+            // 8 GHẾ ƯU TIÊN ĐẦU TIÊN (Chia đều 4 Bàn Trái + 4 Bàn Phải, cách thoáng 1.55f chiều ngang & 1.35f chiều dọc)
+            _seats[1]  = new SeatInfo { Index = 1,  Position = new Vector3(-2.55f,  0.40f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[2]  = new SeatInfo { Index = 2,  Position = new Vector3( 1.05f,  0.40f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[3]  = new SeatInfo { Index = 3,  Position = new Vector3(-1.05f,  0.40f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[4]  = new SeatInfo { Index = 4,  Position = new Vector3( 2.55f,  0.40f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[5]  = new SeatInfo { Index = 5,  Position = new Vector3(-2.55f, -0.95f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[6]  = new SeatInfo { Index = 6,  Position = new Vector3( 1.05f, -0.95f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[7]  = new SeatInfo { Index = 7,  Position = new Vector3(-1.05f, -0.95f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[8]  = new SeatInfo { Index = 8,  Position = new Vector3( 2.55f, -0.95f, -0.5f), IsOccupied = false, IsThrone = false };
 
-            // Cụm Bàn 2 (Y = -1.1f): 4 ghế
-            _seats[3] = new SeatInfo { Index = 3, Position = new Vector3(-2.85f, -0.85f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[4] = new SeatInfo { Index = 4, Position = new Vector3(-1.55f, -0.85f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[5] = new SeatInfo { Index = 5, Position = new Vector3(-2.85f, -1.45f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[6] = new SeatInfo { Index = 6, Position = new Vector3(-1.55f, -1.45f, 0f), IsOccupied = false, IsThrone = false };
-
-            // Cụm Bàn 3 (Y = -2.6f): 4 ghế
-            _seats[7] = new SeatInfo { Index = 7, Position = new Vector3(-2.85f, -2.35f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[8] = new SeatInfo { Index = 8, Position = new Vector3(-1.55f, -2.35f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[9] = new SeatInfo { Index = 9, Position = new Vector3(-2.85f, -2.95f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[10] = new SeatInfo { Index = 10, Position = new Vector3(-1.55f, -2.95f, 0f), IsOccupied = false, IsThrone = false };
-
-            // DÃY BÀN PHẢI (X ~ +2.2f)
-            // Cụm Bàn 4 (Y = +0.2f): 2 ghế
-            _seats[11] = new SeatInfo { Index = 11, Position = new Vector3(1.55f, 0.45f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[12] = new SeatInfo { Index = 12, Position = new Vector3(2.85f, 0.45f, 0f), IsOccupied = false, IsThrone = false };
-
-            // Cụm Bàn 5 (Y = -1.1f): 2 ghế
-            _seats[13] = new SeatInfo { Index = 13, Position = new Vector3(1.55f, -0.85f, 0f), IsOccupied = false, IsThrone = false };
-            _seats[14] = new SeatInfo { Index = 14, Position = new Vector3(2.85f, -0.85f, 0f), IsOccupied = false, IsThrone = false };
-
-            // Cụm Bàn 6 (Y = -2.6f): 1 ghế
-            _seats[15] = new SeatInfo { Index = 15, Position = new Vector3(2.20f, -2.55f, 0f), IsOccupied = false, IsThrone = false };
+            // HÀNG DƯỚI (Y = -2.25f)
+            _seats[9]  = new SeatInfo { Index = 9,  Position = new Vector3(-2.55f, -2.25f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[10] = new SeatInfo { Index = 10, Position = new Vector3(-1.05f, -2.25f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[11] = new SeatInfo { Index = 11, Position = new Vector3( 1.05f, -2.25f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[12] = new SeatInfo { Index = 12, Position = new Vector3( 2.55f, -2.25f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[13] = new SeatInfo { Index = 13, Position = new Vector3(-1.80f, -1.60f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[14] = new SeatInfo { Index = 14, Position = new Vector3( 1.80f, -1.60f, -0.5f), IsOccupied = false, IsThrone = false };
+            _seats[15] = new SeatInfo { Index = 15, Position = new Vector3( 0.00f, -2.25f, -0.5f), IsOccupied = false, IsThrone = false };
         }
 
         // ==================== KHỞI TẠO BỐ CỤC UI CHUẨN MẪU TIKTOK LIVE ====================
         private void InitializeHud()
         {
+            GameObject existingHud = GameObject.Find("TeaStallHudRoot");
+            while (existingHud != null)
+            {
+                DestroyImmediate(existingHud);
+                existingHud = GameObject.Find("TeaStallHudRoot");
+            }
+
             GameObject hudGo = new GameObject("TeaStallHudRoot");
             hudGo.transform.position = Vector3.zero;
             _hudRoot = hudGo.transform;
 
-            // 1. HEADER NEON TRÊN CÙNG (Y = +6.85f)
+            // 1. HEADER NEON TRÊN CÙNG (Y = +6.75f, Z = -2.6f)
             GameObject headerGo = new GameObject("HudHeaderNeon");
             headerGo.transform.SetParent(_hudRoot, false);
-            headerGo.transform.position = new Vector3(0f, 6.85f, 0f);
+            headerGo.transform.position = new Vector3(0f, 6.75f, -2.6f);
             _hudHeaderTitle = headerGo.AddComponent<TextMeshPro>();
             _hudHeaderTitle.alignment = TextAlignmentOptions.Center;
-            _hudHeaderTitle.fontSize = 3.3f;
+            _hudHeaderTitle.fontSize = 2.4f;
             _hudHeaderTitle.fontStyle = FontStyles.Bold;
             _hudHeaderTitle.color = new Color(1.0f, 0.40f, 0.70f); // Hồng neon rực rỡ
             _hudHeaderTitle.outlineWidth = 0.28f;
             _hudHeaderTitle.outlineColor = Color.black;
             _hudHeaderTitle.sortingOrder = 100;
-            _hudHeaderTitle.text = "🏮 QUÁN TRÀ ĐÁ CHUNG • BÌNH LUẬN LÀ CÓ NƯỚC 🏮";
+            _hudHeaderTitle.text = "=== QUÁN TRÀ ĐÁ BÀ TÁM • BÌNH LUẬN LÀ CÓ NƯỚC ===";
 
-            // 2. 4 Ô THỐNG KÊ TRỰC TIẾP (Y = +6.05f)
-            string[] statTitles = new string[] { "ĐÃ BÁN", "ĐANG NGỒI", "LẦN DÔ", "KOTH" };
-            float[] statX = new float[] { -2.85f, -0.95f, 0.95f, 2.85f };
+            // 2. 4 Ô THỐNG KÊ TRỰC TIẾP (Y = +5.95f)
+            float[] statX = new float[] { -2.7f, -0.9f, 0.9f, 2.7f };
 
             for (int i = 0; i < 4; i++)
             {
                 // Box nền đen bo góc viền vàng
                 GameObject boxGo = new GameObject("StatBox_" + i);
                 boxGo.transform.SetParent(_hudRoot, false);
-                boxGo.transform.position = new Vector3(statX[i], 6.05f, 0f);
-                boxGo.transform.localScale = new Vector3(1.75f, 0.75f, 1f);
+                boxGo.transform.position = new Vector3(statX[i], 5.95f, -2.5f);
+                boxGo.transform.localScale = new Vector3(1.65f, 0.65f, 1f);
                 var sr = boxGo.AddComponent<SpriteRenderer>();
                 sr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
-                sr.color = new Color(0.12f, 0.08f, 0.06f, 0.92f); // Nâu đậm
+                sr.color = new Color(0.10f, 0.08f, 0.06f, 0.92f); // Nâu đen
                 sr.sortingOrder = 95;
 
-                // Chữ trong box
-                GameObject txtGo = new GameObject("StatTxt");
-                txtGo.transform.SetParent(boxGo.transform, false);
-                txtGo.transform.localPosition = new Vector3(0f, 0f, 0f);
+                // Chữ trong box (không phụ thuộc scale của box)
+                GameObject txtGo = new GameObject("StatTxt_" + i);
+                txtGo.transform.SetParent(_hudRoot, false);
+                txtGo.transform.position = new Vector3(statX[i], 5.95f, -2.6f);
                 var tmp = txtGo.AddComponent<TextMeshPro>();
                 tmp.alignment = TextAlignmentOptions.Center;
-                tmp.fontSize = 2.4f;
+                tmp.fontSize = 1.35f;
                 tmp.fontStyle = FontStyles.Bold;
                 tmp.sortingOrder = 100;
                 _hudStatBoxes[i] = tmp;
             }
             UpdateStatBoxes();
 
-            // 3. THANH THÔNG BÁO SỰ KIỆN CHẠY NGANG - TICKER (Y = +5.30f)
+            // 3. THANH THÔNG BÁO SỰ KIỆN CHẠY NGANG - TICKER (Y = +5.25f)
             GameObject tickerBgGo = new GameObject("TickerBannerBg");
             tickerBgGo.transform.SetParent(_hudRoot, false);
-            tickerBgGo.transform.position = new Vector3(0f, 5.30f, 0f);
-            tickerBgGo.transform.localScale = new Vector3(7.6f, 0.52f, 1f);
+            tickerBgGo.transform.position = new Vector3(0f, 5.25f, -2.5f);
+            tickerBgGo.transform.localScale = new Vector3(7.4f, 0.42f, 1f);
             var tickerSr = tickerBgGo.AddComponent<SpriteRenderer>();
             tickerSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
             tickerSr.color = new Color(0.95f, 0.75f, 0.15f, 0.95f); // Vàng rực nổi bật
             tickerSr.sortingOrder = 95;
 
             GameObject tickerTxtGo = new GameObject("TickerText");
-            tickerTxtGo.transform.SetParent(tickerBgGo.transform, false);
-            tickerTxtGo.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+            tickerTxtGo.transform.SetParent(_hudRoot, false);
+            tickerTxtGo.transform.position = new Vector3(0f, 5.25f, -2.6f);
             _hudTickerTmp = tickerTxtGo.AddComponent<TextMeshPro>();
             _hudTickerTmp.alignment = TextAlignmentOptions.Center;
-            _hudTickerTmp.fontSize = 2.1f;
+            _hudTickerTmp.fontSize = 1.25f;
             _hudTickerTmp.fontStyle = FontStyles.Bold;
             _hudTickerTmp.color = new Color(0.12f, 0.08f, 0.05f); // Chữ nâu sẫm
             _hudTickerTmp.sortingOrder = 100;
             _hudTickerTmp.text = LatestTickerText;
 
-            // 4. BẢNG ĐÔI SONG SONG: THỰC ĐƠN VỈA HÈ & ĐẠI GIA VỈA HÈ (Y: +2.5f -> +4.8f)
-            // 4.1 Bảng Trái: THỰC ĐƠN VỈA HÈ (X = -2.0f, Y = 3.65f)
+            // 4. BẢNG ĐÔI SONG SONG: THỰC ĐƠN VỈA HÈ & ĐẠI GIA VỈA HÈ (Y = +3.65f)
+            // 4.1 Bảng Trái: THỰC ĐƠN VỈA HÈ (X = -1.95f)
             GameObject menuBoxGo = new GameObject("MenuBoardBox");
             menuBoxGo.transform.SetParent(_hudRoot, false);
-            menuBoxGo.transform.position = new Vector3(-1.95f, 3.65f, 0f);
-            menuBoxGo.transform.localScale = new Vector3(3.6f, 2.55f, 1f);
+            menuBoxGo.transform.position = new Vector3(-1.95f, 3.65f, -2.5f);
+            menuBoxGo.transform.localScale = new Vector3(3.55f, 2.50f, 1f);
             var menuSr = menuBoxGo.AddComponent<SpriteRenderer>();
             menuSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
             menuSr.color = new Color(0.05f, 0.16f, 0.12f, 0.95f); // Xanh rêu sẫm #0D261D
             menuSr.sortingOrder = 95;
 
             GameObject menuTxtGo = new GameObject("MenuContentText");
-            menuTxtGo.transform.SetParent(menuBoxGo.transform, false);
-            menuTxtGo.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+            menuTxtGo.transform.SetParent(_hudRoot, false);
+            menuTxtGo.transform.position = new Vector3(-1.95f, 3.65f, -2.6f);
             _hudMenuContentTmp = menuTxtGo.AddComponent<TextMeshPro>();
             _hudMenuContentTmp.alignment = TextAlignmentOptions.TopLeft;
-            _hudMenuContentTmp.fontSize = 2.1f;
-            _hudMenuContentTmp.lineSpacing = 12f;
+            _hudMenuContentTmp.fontSize = 1.28f;
+            _hudMenuContentTmp.lineSpacing = 10f;
             _hudMenuContentTmp.sortingOrder = 100;
             _hudMenuContentTmp.rectTransform.sizeDelta = new Vector2(3.3f, 2.3f);
             _hudMenuContentTmp.text =
-                "<b><color=#FFD700>📜 THỰC ĐƠN VỈA HÈ</color></b>\n" +
-                "🍵 Trà đá / Dô ........... <color=#00FF88>FREE (Cmt)</color>\n" +
-                "🌻 Hướng dương ........ <color=#FFB6C1>20 Tim</color>\n" +
-                "🔥 Thuốc lào .............. <color=#FF8C00>1 Xu</color>\n" +
-                "🍢 Nem chua rán ....... <color=#FFA500>10 Xu</color>\n" +
-                "🎤 Loa kẹo kéo ......... <color=#FF1493>50 Xu</color>\n" +
-                "👑 Bao cả quán .......... <color=#FFD700>100 Xu</color>\n" +
+                "<b><color=#FFD700>=== THỰC ĐƠN VỈA HÈ ===</color></b>\n" +
+                "[1] Trà đá / Dô .......... <color=#00FF88>FREE (Cmt)</color>\n" +
+                "[2] Hướng dương ....... <color=#FFB6C1>20 Tim</color>\n" +
+                "[3] Thuốc lào ............. <color=#FF8C00>1 Xu</color>\n" +
+                "[4] Nem chua rán ...... <color=#FFA500>10 Xu</color>\n" +
+                "[5] Loa kẹo kéo ........ <color=#FF1493>50 Xu</color>\n" +
+                "[6] Bao cả quán ......... <color=#FFD700>100 Xu</color>\n" +
                 "<i><color=#CCCCCC>Gõ #veso #banhmi #vip đổi danh hiệu!</color></i>";
 
-            // 4.2 Bảng Phải: ĐẠI GIA VỈA HÈ (X = +1.95f, Y = 3.65f)
+            // 4.2 Bảng Phải: ĐẠI GIA VỈA HÈ (X = +1.95f)
             GameObject vipBoxGo = new GameObject("VipBoardBox");
             vipBoxGo.transform.SetParent(_hudRoot, false);
-            vipBoxGo.transform.position = new Vector3(1.95f, 3.65f, 0f);
-            vipBoxGo.transform.localScale = new Vector3(3.6f, 2.55f, 1f);
+            vipBoxGo.transform.position = new Vector3(1.95f, 3.65f, -2.5f);
+            vipBoxGo.transform.localScale = new Vector3(3.55f, 2.50f, 1f);
             var vipSr = vipBoxGo.AddComponent<SpriteRenderer>();
             vipSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
             vipSr.color = new Color(0.10f, 0.08f, 0.18f, 0.95f); // Tím than sẫm #1A142B
             vipSr.sortingOrder = 95;
 
             GameObject vipTxtGo = new GameObject("VipContentText");
-            vipTxtGo.transform.SetParent(vipBoxGo.transform, false);
-            vipTxtGo.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+            vipTxtGo.transform.SetParent(_hudRoot, false);
+            vipTxtGo.transform.position = new Vector3(1.95f, 3.65f, -2.6f);
             _hudVipContentTmp = vipTxtGo.AddComponent<TextMeshPro>();
             _hudVipContentTmp.alignment = TextAlignmentOptions.TopLeft;
-            _hudVipContentTmp.fontSize = 2.1f;
-            _hudVipContentTmp.lineSpacing = 12f;
+            _hudVipContentTmp.fontSize = 1.28f;
+            _hudVipContentTmp.lineSpacing = 10f;
             _hudVipContentTmp.sortingOrder = 100;
             _hudVipContentTmp.rectTransform.sizeDelta = new Vector2(3.3f, 2.3f);
             UpdateVipLeaderboardHud();
 
-            // 5. THANH TIẾN ĐỘ "🍻 CỤNG LY • QUẨY VỈA HÈ" Ở ĐÁY MÀN HÌNH (Y = -4.45f)
+            // 5. THANH TIẾN ĐỘ "[DÔ] CỤNG LY • QUẨY VỈA HÈ" Ở ĐÁY MÀN HÌNH (Y = -4.85f)
             GameObject cheersBarRoot = new GameObject("CheersProgressBarRoot");
             cheersBarRoot.transform.SetParent(_hudRoot, false);
-            cheersBarRoot.transform.position = new Vector3(0f, -4.45f, 0f);
+            cheersBarRoot.transform.position = new Vector3(0f, -4.85f, -2.5f);
 
             // Nền thanh trượt
             GameObject barBgGo = new GameObject("BarBg");
             barBgGo.transform.SetParent(cheersBarRoot.transform, false);
-            barBgGo.transform.localScale = new Vector3(7.4f, 0.6f, 1f);
+            barBgGo.transform.localPosition = Vector3.zero;
+            barBgGo.transform.localScale = new Vector3(7.2f, 0.45f, 1f);
             var barBgSr = barBgGo.AddComponent<SpriteRenderer>();
             barBgSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
             barBgSr.color = new Color(0.15f, 0.12f, 0.15f, 0.9f);
@@ -294,25 +307,57 @@ namespace TikTokTeaStall
             // Thanh Fill vàng cam
             GameObject barFillGo = new GameObject("BarFill");
             barFillGo.transform.SetParent(cheersBarRoot.transform, false);
-            barFillGo.transform.localPosition = new Vector3(-3.5f, 0f, 0f);
+            barFillGo.transform.localPosition = new Vector3(0f, 0f, -0.05f);
             _cheersBarFillTr = barFillGo.transform;
             var fillSr = barFillGo.AddComponent<SpriteRenderer>();
             fillSr.sprite = TeaStallPalette.GetFallbackSprite(FallbackSpriteType.RoundedRect);
-            fillSr.color = new Color(1.0f, 0.65f, 0.05f); // Vàng cam ấm
+            fillSr.color = new Color(1.0f, 0.65f, 0.05f);
             fillSr.sortingOrder = 96;
 
             // Chữ hiển thị tiến độ
             GameObject barTxtGo = new GameObject("BarText");
             barTxtGo.transform.SetParent(cheersBarRoot.transform, false);
-            barTxtGo.transform.localPosition = new Vector3(0f, 0.02f, 0f);
+            barTxtGo.transform.localPosition = new Vector3(0f, 0f, -0.1f);
             _cheersBarTextTmp = barTxtGo.AddComponent<TextMeshPro>();
             _cheersBarTextTmp.alignment = TextAlignmentOptions.Center;
-            _cheersBarTextTmp.fontSize = 2.1f;
+            _cheersBarTextTmp.fontSize = 1.15f;
             _cheersBarTextTmp.fontStyle = FontStyles.Bold;
             _cheersBarTextTmp.color = Color.white;
             _cheersBarTextTmp.outlineWidth = 0.22f;
             _cheersBarTextTmp.outlineColor = Color.black;
             _cheersBarTextTmp.sortingOrder = 100;
+            UpdateCheersBar();
+        }
+
+        public void ClearCustomers()
+        {
+            _customers.Clear();
+            _commentCounts.Clear();
+            _likeCounts.Clear();
+            _donateCoins.Clear();
+            _kothCommentLeaderId = "";
+            _kothLikeLeaderId = "";
+            _kothDonateLeaderId = "";
+
+            for (int i = 0; i < _seats.Length; i++)
+            {
+                _seats[i].IsOccupied = false;
+                _seats[i].OccupantUserId = "";
+            }
+
+            if (CustomerParent != null)
+            {
+                for (int i = CustomerParent.childCount - 1; i >= 0; i--)
+                {
+                    DestroyImmediate(CustomerParent.GetChild(i).gameObject);
+                }
+            }
+        }
+
+        public void RefreshHudVisuals()
+        {
+            UpdateStatBoxes();
+            UpdateVipLeaderboardHud();
             UpdateCheersBar();
         }
 
@@ -323,10 +368,10 @@ namespace TikTokTeaStall
             string kothName = !string.IsNullOrEmpty(_kothDonateLeaderId) && _customers.TryGetValue(_kothDonateLeaderId, out var c) ? c.Nickname : "Chưa có";
             if (kothName.Length > 8) kothName = kothName.Substring(0, 8) + "..";
 
-            _hudStatBoxes[0].text = $"<color=#AAAAAA><size=70%>ĐÃ BÁN</size></color>\n<color=#FFD700>🍵 {TotalTeaSold}</color>";
-            _hudStatBoxes[1].text = $"<color=#AAAAAA><size=70%>ĐANG NGỒI</size></color>\n<color=#00F0FF>🪑 {_customers.Count}/16</color>";
-            _hudStatBoxes[2].text = $"<color=#AAAAAA><size=70%>LẦN DÔ</size></color>\n<color=#FF69B4>🍻 {TotalCheersCount}</color>";
-            _hudStatBoxes[3].text = $"<color=#AAAAAA><size=70%>KOTH</size></color>\n<color=#FFA500>👑 {kothName}</color>";
+            _hudStatBoxes[0].text = $"<color=#AAAAAA><size=70%>ĐÃ BÁN</size></color>\n<color=#FFD700>{TotalTeaSold} Cốc</color>";
+            _hudStatBoxes[1].text = $"<color=#AAAAAA><size=70%>ĐANG NGỒI</size></color>\n<color=#00F0FF>{_customers.Count}/16 Ghế</color>";
+            _hudStatBoxes[2].text = $"<color=#AAAAAA><size=70%>LẦN DÔ</size></color>\n<color=#FF69B4>{TotalCheersCount} Lần</color>";
+            _hudStatBoxes[3].text = $"<color=#AAAAAA><size=70%>TRÙM QUÁN</size></color>\n<color=#FFA500>{kothName}</color>";
         }
 
         public void SetTickerMessage(string msg)
@@ -342,21 +387,21 @@ namespace TikTokTeaStall
             var list = new List<TeaCustomerAgent>(_customers.Values);
             list.Sort((a, b) => b.Exp.CompareTo(a.Exp));
 
-            string t = "<b><color=#FFD700>👑 ĐẠI GIA VỈA HÈ</color></b>\n";
+            string t = "<b><color=#FFD700>=== ĐẠI GIA VỈA HÈ ===</color></b>\n";
             int count = Mathf.Min(5, list.Count);
             if (count == 0)
             {
-                t += "<color=#888888>Chưa có ai ngồi quán...</color>";
+                t += "<color=#888888>Chưa có ai ngồi quán...</color>\n";
             }
             else
             {
                 for (int i = 0; i < count; i++)
                 {
                     var c = list[i];
-                    string medal = i == 0 ? "🥇" : (i == 1 ? "🥈" : (i == 2 ? "🥉" : $"{i + 1}."));
+                    string prefix = i == 0 ? "[TOP 1]" : (i == 1 ? "[TOP 2]" : (i == 2 ? "[TOP 3]" : $"[{i + 1}]"));
                     string name = c.Nickname.Length > 10 ? c.Nickname.Substring(0, 9) + ".." : c.Nickname;
                     int coins = _donateCoins.ContainsKey(c.UserId) ? _donateCoins[c.UserId] : (c.Exp / 50);
-                    t += $"{medal} {name} ......... <color=#FFD700>{coins} xu</color>\n";
+                    t += $"{prefix} {name} ......... <color=#FFD700>{coins} xu</color>\n";
                 }
             }
             t += "<i><color=#CCCCCC>Tổng xu hôm nay: " + (TotalTeaSold * 3) + " xu</color></i>";
@@ -369,11 +414,11 @@ namespace TikTokTeaStall
 
             float pct = Mathf.Clamp01(CheersProgress / 100f);
             float maxW = 7.2f;
-            _cheersBarFillTr.localScale = new Vector3(maxW * pct, 0.48f, 1f);
-            _cheersBarFillTr.localPosition = new Vector3(-3.6f + (maxW * pct) / 2f, 0f, 0f);
+            _cheersBarFillTr.localScale = new Vector3(maxW * pct, 0.45f, 1f);
+            _cheersBarFillTr.localPosition = new Vector3(-3.6f + (maxW * pct) / 2f, 0f, -0.05f);
 
             int timGoal = (int)(CheersProgress * 2);
-            _cheersBarTextTmp.text = $"🍻 CỤNG LY • Bình luận DÔ / Thả tim  |  💖 {timGoal}/200 tim ➔ 🎶 QUẨY {(int)CheersProgress}%";
+            _cheersBarTextTmp.text = $"[DÔ] CỤNG LY • Bình luận DÔ / Thả tim  |  TIM: {timGoal}/200  =>  QUẨY {(int)CheersProgress}%";
         }
 
         public void AddCheersProgress(float amount)
@@ -383,7 +428,7 @@ namespace TikTokTeaStall
             {
                 CheersProgress = 0f;
                 TotalCheersCount++;
-                SetTickerMessage($"🍻 CẢ QUÁN ĐỒNG THANH DÔ LẦN THỨ {TotalCheersCount}! BẬT LOA KẸO KÉO QUẨY BANH NÓC!");
+                SetTickerMessage($"[DÔ LẦN {TotalCheersCount}] CẢ QUÁN ĐỒNG THANH NÂNG CỐC QUẨY BANH NÓC!");
                 TriggerKeoKeoPartyEvent();
             }
             UpdateCheersBar();
@@ -461,7 +506,7 @@ namespace TikTokTeaStall
             if (lower.Contains("dô") || lower.Contains("zo") || lower.Contains("cạn") || lower.Contains("100%") || lower.Contains("bia") || lower.Contains("trà"))
             {
                 AddCheersProgress(8f);
-                SetTickerMessage($"🍻 @{nickname} hô 'DÔ'! Cả quán cùng nâng cốc!");
+                SetTickerMessage($"[DÔ] @{nickname} hô 'DÔ'! Cả quán cùng nâng cốc!");
             }
 
             string smartReply = TeaLadyDialogueBank.GetSmartReplyForComment(customer.Nickname, commentText, out string specialCmd);
@@ -508,7 +553,7 @@ namespace TikTokTeaStall
             _donateCoins[userId] += coins;
             CheckKothDonateLeader(userId);
 
-            SetTickerMessage($"🎁 @{nickname} vừa tặng {giftName} ({coins} xu) cho quán Bà Tám!");
+            SetTickerMessage($"[QUÀ] @{nickname} vừa tặng {giftName} ({coins} xu) cho quán Bà Tám!");
 
             if (TeaLady != null)
             {
@@ -561,21 +606,21 @@ namespace TikTokTeaStall
 
                 if (isJackpot)
                 {
-                    customer.SetCustomTitle("🎰 TỶ PHÚ VÉ SỐ 79");
+                    customer.SetCustomTitle("[VÉ SỐ] TỶ PHÚ VÉ SỐ 79");
                     customer.AddExp(500);
                     if (TeaStallAudio.Instance != null) TeaStallAudio.Instance.PlayBaoQuanJackpot();
-                    customer.ShowSpeechBubble($"🎉 ÔI TRÚNG ĐỘC ĐẮC SỐ [{luckyNumber:D2}] RỒI BÀ CON ƠI! TÔI THÀNH TỶ PHÚ RỒI!", 5.5f);
-                    SetTickerMessage($"🎰 CHÚC MỪNG @{customer.Nickname} VỪA TRÚNG VÉ SỐ ĐỘC ĐẮC [{luckyNumber:D2}]!");
+                    customer.ShowSpeechBubble($"[TRÚNG SỐ] ÔI TRÚNG ĐỘC ĐẮC SỐ [{luckyNumber:D2}] RỒI BÀ CON ƠI! TÔI THÀNH TỶ PHÚ RỒI!", 5.5f);
+                    SetTickerMessage($"[TRÚNG SỐ] CHÚC MỪNG @{customer.Nickname} VỪA TRÚNG VÉ SỐ ĐỘC ĐẮC [{luckyNumber:D2}]!");
                 }
                 else
                 {
                     customer.AddExp(20);
-                    customer.ShowSpeechBubble($"🎟️ Vừa bốc tờ vé số đuôi [{luckyNumber:D2}], chiều nay chờ thần tài gõ cửa!", 4.0f);
+                    customer.ShowSpeechBubble($"[VÉ SỐ] Vừa bốc tờ vé số đuôi [{luckyNumber:D2}], chiều nay chờ thần tài gõ cửa!", 4.0f);
                 }
             }
             else if (cmd == "ACTION:ORDER_BREAD")
             {
-                customer.ShowSpeechBubble("🥖 Bánh mì giòn rụm thơm bơ quá!", 3.5f);
+                customer.ShowSpeechBubble("[BÁNH MÌ] Bánh mì giòn rụm thơm bơ quá!", 3.5f);
                 customer.AddExp(15);
             }
         }
@@ -684,7 +729,7 @@ namespace TikTokTeaStall
         private IEnumerator PatrolPanicCoroutine()
         {
             IsPatrolPanic = true;
-            SetTickerMessage("🚨 TRẬT TỰ PHƯỜNG ĐI TUẦN! BÀ CON ÔM GHẾ DỌN VÀO TRONG VẠCH SƠN TRẮNG!");
+            SetTickerMessage("[CẢNH BÁO] TRẬT TỰ PHƯỜNG ĐI TUẦN! BÀ CON ÔM GHẾ DỌN VÀO TRONG VẠCH SƠN TRẮNG!");
 
             float wallY = 0.85f;
             int idx = 0;
@@ -698,7 +743,7 @@ namespace TikTokTeaStall
 
             yield return new WaitForSeconds(5.5f);
             IsPatrolPanic = false;
-            SetTickerMessage("✅ Trật tự phường đã đi qua! Kê ghế ra chém gió tiếp nào bà con!");
+            SetTickerMessage("[AN TOÀN] Trật tự phường đã đi qua! Kê ghế ra chém gió tiếp nào bà con!");
         }
 
         public void TriggerBaoQuanPartyEvent(TeaCustomerAgent host = null)
@@ -711,11 +756,11 @@ namespace TikTokTeaStall
             if (TeaStallAudio.Instance != null) TeaStallAudio.Instance.PlayBaoQuanJackpot();
 
             string hostName = host != null ? host.Nickname : "ĐẠI GIA BÍ ẨN";
-            SetTickerMessage($"👑 ĐẠI GIA @{hostName} VỪA BAO CẢ QUÁN! TOÀN BỘ KHÁCH ĐƯỢC FREE NƯỚC + 100 EXP!");
+            SetTickerMessage($"[VIP] ĐẠI GIA @{hostName} VỪA BAO CẢ QUÁN! TOÀN BỘ KHÁCH ĐƯỢC FREE NƯỚC + 100 EXP!");
 
             if (TeaLady != null)
             {
-                TeaLady.Say($"👑 ĐẠI GIA {hostName} BAO CẢ QUÁN! MỖI NGƯỜI 1 CỐC TRÀ ĐÁ + 1 ĐĨA NEM CHUA + 100 EXP!", 6.0f);
+                TeaLady.Say($"[VIP] ĐẠI GIA {hostName} BAO CẢ QUÁN! MỖI NGƯỜI 1 CỐC TRÀ ĐÁ + 1 ĐĨA NEM CHUA + 100 EXP!", 6.0f);
             }
 
             foreach (var kvp in _customers)
@@ -754,7 +799,7 @@ namespace TikTokTeaStall
             }
         }
 
-        public void SpawnStreetNpc(StreetNpcType type)
+        public StreetNpcAgent SpawnStreetNpc(StreetNpcType type)
         {
             GameObject npcGo = new GameObject("StreetNpc_" + type);
             var npc = npcGo.AddComponent<StreetNpcAgent>();
@@ -765,16 +810,17 @@ namespace TikTokTeaStall
             Vector3 exitPos  = new Vector3(4.8f, -3.4f, 0f);
 
             npc.WalkAcrossStreet(startPos, stopPos, exitPos);
+            return npc;
         }
 
         private void HookTikTokBridge()
         {
-            var bridge = FindFirstObjectByType<TikTokLiveBridge>();
+            var bridge = UnityEngine.Object.FindAnyObjectByType<TikTokLiveBridge>();
             if (bridge != null)
             {
-                bridge.OnCommentReceived += (msg) => HandleViewerComment(msg.UniqueId, msg.Nickname, msg.Comment);
-                bridge.OnLikeReceived += (like) => HandleViewerLike(like.UniqueId, like.Nickname, like.LikeCount);
-                bridge.OnGiftReceived += (gift) => HandleViewerGift(gift.UniqueId, gift.Nickname, gift.GiftName, gift.RepeatCount * gift.DiamondCount);
+                bridge.OnCommentReceived += (uId, nick, msg) => HandleViewerComment(uId, nick, msg);
+                bridge.OnLikeReceived += (uId, nick, cnt) => HandleViewerLike(uId, nick, cnt);
+                bridge.OnGiftReceived += (uId, nick, gift, coins) => HandleViewerGift(uId, nick, gift, coins);
             }
         }
 

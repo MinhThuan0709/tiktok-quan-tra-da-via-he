@@ -9,7 +9,16 @@ namespace TikTokTeaStall
     /// </summary>
     public class TeaStallAudio : MonoBehaviour
     {
-        public static TeaStallAudio Instance { get; private set; }
+        private static TeaStallAudio _instance;
+        public static TeaStallAudio Instance
+        {
+            get
+            {
+                if (_instance == null) _instance = UnityEngine.Object.FindAnyObjectByType<TeaStallAudio>();
+                return _instance;
+            }
+            set => _instance = value;
+        }
 
         private const int SampleRate = 44100;
         private AudioSource _sfxSource;

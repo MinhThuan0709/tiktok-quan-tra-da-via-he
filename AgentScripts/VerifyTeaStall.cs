@@ -12,6 +12,47 @@ public static class VerifyTeaStall
 {
     private const string CaptureDir = "Assets/Captures";
 
+    public static void RunVerificationFromCommandLine()
+    {
+        Sprite s1 = Resources.Load<Sprite>("TeaStall/Sprites/char_tier1_toong");
+        Sprite s2 = Resources.Load<Sprite>("TeaStall/Sprites/badge_frame_wood");
+        Sprite s3 = Resources.Load<Sprite>("TeaStall/Sprites/street_tea_bg");
+        Debug.Log($"[CheckSprites] char1: {(s1 != null ? s1.name + ", rect=" + s1.rect + ", tex=" + s1.texture.name : "NULL")}");
+        Debug.Log($"[CheckSprites] wood: {(s2 != null ? s2.name + ", rect=" + s2.rect + ", tex=" + s2.texture.name : "NULL")}");
+        Debug.Log($"[CheckSprites] bg: {(s3 != null ? s3.name + ", rect=" + s3.rect + ", tex=" + s3.texture.name : "NULL")}");
+
+        string scan = RunMachineScan();
+        Debug.Log("[VerifyTeaStall Scan] " + scan);
+        string res = RunFullVerificationAndCapture();
+        Debug.Log("[VerifyTeaStall Capture] " + res);
+        DumpSceneInfo();
+    }
+
+    public static void DumpSceneInfo()
+    {
+        var gos = Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+        var sb = new StringBuilder();
+        sb.AppendLine("TOTAL GOS: " + gos.Length);
+        foreach (var go in gos)
+        {
+            if (go.name.Contains("Customer") || go.name.Contains("Npc") || go.name.Contains("Throne") || go.name.Contains("Table") || go.name.Contains("Hud") || go.name.Contains("Environment"))
+            {
+                sb.AppendLine($"{go.name} | Pos={go.transform.position} | Scale={go.transform.localScale} | Active={go.activeInHierarchy}");
+                var srs = go.GetComponentsInChildren<SpriteRenderer>(true);
+                foreach (var sr in srs)
+                {
+                    sb.AppendLine($"   SR: {sr.name} | Sprite={(sr.sprite != null ? sr.sprite.name : "null")} | Order={sr.sortingOrder} | Color={sr.color} | Pos={sr.transform.position} | Scale={sr.transform.localScale} | Enabled={sr.enabled}");
+                }
+                var tmps = go.GetComponentsInChildren<TextMeshPro>(true);
+                foreach (var tmp in tmps)
+                {
+                    sb.AppendLine($"   TMP: {tmp.name} | Text={tmp.text} | Order={tmp.sortingOrder} | Pos={tmp.transform.position} | Scale={tmp.transform.localScale} | Enabled={tmp.enabled}");
+                }
+            }
+        }
+        File.WriteAllText("Assets/scene_dump.txt", sb.ToString());
+    }
+
     public static string RunMachineScan()
     {
         var sb = new StringBuilder();
@@ -58,52 +99,61 @@ public static class VerifyTeaStall
         var mgr = TeaStallManager.Instance;
         if (mgr == null) return "FAIL: TeaStallManager.Instance is null.";
 
+        mgr.EnsureInitialized();
         mgr.EnableBotSimulator = false;
 
-        // Dàn dựng 6 khách tiêu biểu đại diện 6 Tiers
+        // Xóa sạch các customer cũ và reset ghế để dàn cảnh mới tinh
+        mgr.ClearCustomers();
+
+        // Dàn dựng 8 khách tiêu biểu chia đều 2 dãy bàn Trái & Phải + Ngai Vàng trung tâm
         var c1 = mgr.GetOrCreateCustomer("u1", "Hữu Lâm");
-        c1.AddExp(15); // Tier 1: Khách Dép Tổ Ong
+        c1.AddExp(15); // Tier 1: Khách Dép Tổ Ong (Trái Trên)
 
         var c2 = mgr.GetOrCreateCustomer("u2", "Sumi");
-        c2.AddExp(70); // Tier 2: Thánh Hướng Dương
+        c2.AddExp(70); // Tier 2: Thánh Hướng Dương (Phải Trên)
 
         var c3 = mgr.GetOrCreateCustomer("u3", "Anh Ba Trà Cú");
-        c3.AddExp(260); // Tier 3: Cao Thủ Thuốc Lào (+ Corgi)
+        c3.AddExp(260); // Tier 3: Cao Thủ Thuốc Lào (Trái Trên Trong)
 
-        var c4 = mgr.GetOrCreateCustomer("u4", "Buồn Phiền");
-        c4.AddExp(920); // Tier 4: Dân Chơi Phố Cổ (+ Cánh Bạc)
+        var c4 = mgr.GetOrCreateCustomer("u4", "Mỹ Xinh");
+        c4.AddExp(920); // Tier 4: Dân Chơi Phố Cổ (Phải Trên Ngoài)
 
         var c5 = mgr.GetOrCreateCustomer("u5", "Hội Mê Phim");
-        c5.AddExp(2900); // Tier 5: Phú Bà Vỉa Hè (+ Cánh Ruby)
+        c5.AddExp(2900); // Tier 5: Phú Bà Vỉa Hè (Trái Giữa)
 
-        var c6 = mgr.GetOrCreateCustomer("u6", "Đại Gia Hà Thành");
-        c6.AddExp(6800); // Tier 6: Thần Tài Bao Cả Phố (+ Ngai Vàng + Rồng Bay)
+        var c6 = mgr.GetOrCreateCustomer("u6", "Tấn Pháp");
+        c6.AddExp(210); // Tier 3 (Phải Giữa)
 
-        // Dàn dựng thêm khách ngồi kín các bàn
         var c7 = mgr.GetOrCreateCustomer("u7", "Bé Bống");
-        c7.AddExp(40);
-        var c8 = mgr.GetOrCreateCustomer("u8", "Tuấn Phố Cổ");
-        c8.AddExp(120);
-        var c9 = mgr.GetOrCreateCustomer("u9", "Mỹ Xinh");
-        c9.AddExp(85);
-        var c10 = mgr.GetOrCreateCustomer("u10", "Tấn Pháp");
-        c10.AddExp(210);
+        c7.AddExp(40); // Tier 1 (Trái Giữa Trong)
+
+        var c8 = mgr.GetOrCreateCustomer("u8", "Đại Gia Hà Thành");
+        c8.AddExp(6800); // Tier 6: Thần Tài Bao Cả Phố -> chuyển ra Ngai Vàng Trung Tâm
+        mgr.HandleViewerGift("u8", "Đại Gia Hà Thành", "Bao Cả Quán", 100);
+
+        // Ẩn bong bóng "Lên cấp" đồng loạt để cảnh 1 khoe trọn vẹn Khung Danh Hiệu 3D & Bàn Trà Đá
+        foreach (var cust in Object.FindObjectsByType<TeaCustomerAgent>(FindObjectsSortMode.None))
+        {
+            cust.HideSpeechBubble();
+        }
 
         // 3 Danh hiệu Độc Tôn KOTH
         c3.SetKothTitle(TeaStallPalette.KOTH_COMMENT); // Đệ Nhất Chém Gió
         c4.SetKothTitle(TeaStallPalette.KOTH_LIKE);    // Chiến Thần Thả Tim
-        c6.SetKothTitle(TeaStallPalette.KOTH_DONATE);  // Trùm Bao Cả Quán
+        c8.SetKothTitle(TeaStallPalette.KOTH_DONATE);  // Trùm Bao Cả Quán
 
         // Cập nhật thống kê HUD
         mgr.TotalTeaSold = 373;
         mgr.TotalCheersCount = 110;
         mgr.CheersProgress = 44f;
-        mgr.SetTickerMessage("🔥 @Hữu Lâm vừa gọi Điếu Cày Thuốc Lào • 🍻 Cả quán đồng thanh DÔ lần thứ 110!");
+        mgr.SetTickerMessage("[HOT] @Hữu Lâm vừa gọi Điếu Cày Thuốc Lào • Cả quán đồng thanh DÔ lần thứ 110!");
 
         if (mgr.TeaLady != null)
         {
-            mgr.TeaLady.Say("🏮 Trà sen nước giếng Ngọc, hướng dương giòn tan mời bà con!", 6.0f);
+            mgr.TeaLady.Say("[MỜI] Trà sen nước giếng Ngọc, hướng dương giòn tan mời bà con!", 6.0f);
         }
+
+        mgr.RefreshHudVisuals();
 
         return "SetupBusyTeaStallShowcase completed.";
     }
@@ -117,16 +167,13 @@ public static class VerifyTeaStall
         var mgr = TeaStallManager.Instance;
         if (mgr == null) return "FAIL: No TeaStallManager.";
 
-        var c3 = mgr.GetOrCreateCustomer("u3", "Anh Ba Trà Cú");
-        var c4 = mgr.GetOrCreateCustomer("u4", "Buồn Phiền");
-        var c6 = mgr.GetOrCreateCustomer("u6", "Đại Gia Hà Thành");
+        var c1 = mgr.GetOrCreateCustomer("u1", "Hữu Lâm");
+        var c4 = mgr.GetOrCreateCustomer("u4", "Mỹ Xinh");
+        var c8 = mgr.GetOrCreateCustomer("u8", "Đại Gia Hà Thành");
 
-        c3.ShowSpeechBubble("💨 Rít một hơi điếu cày nỏ đồng phê lên tận 9 tầng mây!", 6.0f);
-        c4.ShowSpeechBubble("🍵 Bà Tám cho cốc trà sen đậm vị nhiều đá nhé!", 6.0f);
-        c6.ShowSpeechBubble("👑 Hôm nay tôi bao trọn gói trà đá kẹo lạc cả phố cổ!", 6.0f);
-
-        // Kích hoạt nhả khói thuốc lào
-        c3.SmokeDieuCay();
+        c1.ShowSpeechBubble("Rít một hơi điếu cày phê lên 9 tầng mây!", 6.0f);
+        c4.ShowSpeechBubble("Bà Tám cho cốc trà chanh nhiều đá nhé!", 6.0f);
+        c8.ShowSpeechBubble("Hôm nay tôi bao trọn trà đá cả phố!", 6.0f);
 
         return "ShowcaseTitleBadgesAndChat completed.";
     }
@@ -140,7 +187,26 @@ public static class VerifyTeaStall
         var mgr = TeaStallManager.Instance;
         if (mgr == null) return "FAIL: No TeaStallManager.";
 
-        mgr.SpawnStreetNpc(StreetNpcType.GrabDriver);
+        // Dọn NPC đường phố cũ
+        foreach (var n in Object.FindObjectsByType<StreetNpcAgent>(FindObjectsSortMode.None))
+        {
+            if (!n.IsTeaLady) Object.DestroyImmediate(n.gameObject);
+        }
+
+        var grab = mgr.SpawnStreetNpc(StreetNpcType.GrabDriver);
+        if (grab != null)
+        {
+            grab.transform.position = new Vector3(-1.85f, -3.25f, -1.0f);
+            grab.Say("Ting ting! Đơn 5 cốc trà đá hướng dương!", 6f);
+        }
+
+        var lottery = mgr.SpawnStreetNpc(StreetNpcType.LotteryVendor);
+        if (lottery != null)
+        {
+            lottery.transform.position = new Vector3(1.85f, -3.25f, -1.0f);
+            lottery.Say("Vé số chiều xổ! Trúng độc đắc bao quán!", 6f);
+        }
+
         return "ShowcaseStreetNpcsAndGrab completed.";
     }
 
@@ -153,7 +219,26 @@ public static class VerifyTeaStall
         var mgr = TeaStallManager.Instance;
         if (mgr == null) return "FAIL: No TeaStallManager.";
 
+        foreach (var n in Object.FindObjectsByType<StreetNpcAgent>(FindObjectsSortMode.None))
+        {
+            if (!n.IsTeaLady) Object.DestroyImmediate(n.gameObject);
+        }
+
+        // Trật tự phường đi tuần
+        var patrol = mgr.SpawnStreetNpc(StreetNpcType.WardPatrol);
+        if (patrol != null)
+        {
+            patrol.transform.position = new Vector3(0f, -3.15f, -1.0f);
+            patrol.Say("[CÒI] Tuýt tuýt! Dọn bàn ghế vào đúng vạch vỉa hè!", 6f);
+        }
+
         mgr.TriggerPatrolPanicEvent();
+        // Trong ảnh chụp tĩnh, chỉ bật 2 bong bóng đại diện ở 2 đầu để không đè chữ lên nhau
+        var allCusts = Object.FindObjectsByType<TeaCustomerAgent>(FindObjectsSortMode.None);
+        for (int i = 0; i < allCusts.Length; i++)
+        {
+            if (i != 0 && i != allCusts.Length - 1) allCusts[i].HideSpeechBubble();
+        }
         return "ShowcaseTratTuPhuongPanic completed.";
     }
 
@@ -199,6 +284,11 @@ public static class VerifyTeaStall
     {
         var sb = new StringBuilder();
 
+        // Warm up and pre-load all sprites & materials
+        SetupBusyTeaStallShowcase();
+        Camera cam = Camera.main;
+        if (cam != null) cam.Render();
+
         // 1. tea_01_busy_stall.png
         SetupBusyTeaStallShowcase();
         string p1 = CaptureScreenshot("tea_01_busy_stall.png");
@@ -227,13 +317,24 @@ public static class VerifyTeaStall
 
     private static void EnsureManagerReady()
     {
-        if (TeaStallManager.Instance == null)
+        if (UnityEditor.SceneManagement.EditorSceneManager.GetActiveScene().name != "TeaStallScene")
         {
-            var mgr = Object.FindAnyObjectByType<TeaStallManager>();
-            if (mgr == null)
+            if (File.Exists("Assets/Scenes/TeaStallScene.unity"))
             {
-                BuildTeaStallScene.BuildAll();
+                UnityEditor.SceneManagement.EditorSceneManager.OpenScene("Assets/Scenes/TeaStallScene.unity");
             }
+        }
+
+        var mgr = Object.FindAnyObjectByType<TeaStallManager>();
+        if (mgr == null)
+        {
+            BuildTeaStallScene.BuildAll();
+            mgr = Object.FindAnyObjectByType<TeaStallManager>();
+        }
+        if (mgr != null)
+        {
+            TeaStallManager.Instance = mgr;
+            mgr.EnsureInitialized();
         }
     }
 }
