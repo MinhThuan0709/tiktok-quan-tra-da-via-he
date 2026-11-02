@@ -1,6 +1,13 @@
 # 🎨 Đặc Tả Tài Nguyên Đồ Họa Cho MUSE AI — Dự Án "Quán Trà Đá / Quán Nhậu Vỉa Hè" (TikTok Live Game)
 
-Tài liệu này hướng dẫn **MUSE AI** (hoặc bất kỳ công cụ AI Art nào kết nối qua GitHub) tạo và cập nhật trực tiếp bộ tài nguyên đồ họa 2D vào đúng đường dẫn trong dự án Unity để game tự động nhận diện.
+> ## 🚨 CHỈ THỊ BẮT BUỘC DÀNH CHO MUSE AI (MANDATORY GIT COMMIT & PUSH INSTRUCTION)
+> Sau khi tạo xong bộ ảnh PNG trong thư mục `Assets/Resources/TeaStall/Sprites/`, **MUSE AI BẮT BUỘC PHẢI COMMIT VÀ PUSH NGƯỢC TOÀN BỘ ẢNH LÊN LẠI KHO GITHUB NÀY (`origin/main`)** bằng các lệnh sau:
+> ```bash
+> git add Assets/Resources/TeaStall/Sprites/*.png
+> git commit -m "art(muse-ai): upload generated 2D Chibi sprites and title badges to Assets/Resources/TeaStall/Sprites"
+> git push origin main
+> ```
+> **Tuyệt đối không chỉ tạo ảnh ở máy cục bộ/sandbox của MUSE AI mà quên `git push` lên lại GitHub!** Hệ thống Unity bên máy chính đang lắng nghe nhánh `main` của repo `https://github.com/MinhThuan0709/tiktok-quan-tra-da-via-he` để tự động `git pull` ảnh về ngay khi MUSE AI push lên.
 
 ---
 
